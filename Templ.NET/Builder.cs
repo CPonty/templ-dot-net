@@ -9,11 +9,8 @@ namespace Templ
     public class TemplBuilder
     {
         public bool LogEnabled = false;
-
         public const string MIMEType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        //public static string DebugOutPath = HttpContext.Current.Server.MapPath("/App_Data/out.docx");
 
-        // Sorted dictionary because we want to enforce order + unique names
         public List<TemplModule> Modules = new List<TemplModule>();
         public List<TemplModule> DefaultModules = new List<TemplModule>();
 
@@ -25,7 +22,7 @@ namespace Templ
 
         private TemplBuilder(bool useDefaultModules)
         {
-            //Add default handlers for Sections,tables,pictures,text,TOC,comments
+            //Add default handlers for Sections,tables,pictures,text,TOC,comments. Ordering is important.
             DefaultModules = new List<TemplModule>()
             {
                 new TemplSectionModule("Section", this, new string[] { "sec" }),
@@ -51,6 +48,7 @@ namespace Templ
         /// Start with passed-in doc
         /// </summary>
         /// <param name="document"></param>
+        /// <param name="defaultModules"></param>
         public TemplBuilder(DocX document, bool defaultModules = true) : this(defaultModules)
         {
             Doc = document;
@@ -61,6 +59,7 @@ namespace Templ
         /// Start with file stream
         /// </summary>
         /// <param name="stream"></param>
+        /// <param name="defaultModules"></param>
         public TemplBuilder(Stream stream, bool defaultModules = true) : this(defaultModules)
         {
             stream.CopyTo(Stream);
@@ -71,6 +70,7 @@ namespace Templ
         /// Start with filename
         /// </summary>
         /// <param name="filename"></param>
+        /// <param name="defaultModules"></param>
         public TemplBuilder(string filename, bool defaultModules = true) : this(defaultModules)
         {
             Doc = DocX.Load(filename);
@@ -82,6 +82,7 @@ namespace Templ
         /// Initialise from byte array
         /// </summary>
         /// <param name="data"></param>
+        /// <param name="defaultModules"></param>
         public TemplBuilder(byte[] data, bool defaultModules = true) : this(defaultModules)
         {
             Stream = new MemoryStream(data);
@@ -97,11 +98,10 @@ namespace Templ
             Stream = new MemoryStream();
             Doc.SaveAs(Stream);
 
-            /*
-            #if DEBUG
-            this.SaveAs(DebugOutPath);
-            #endif
-            */
+            if (LogEnabled)
+            {
+                //this.SaveAs(DebugOutPath);
+            }
         }
 
         /// <summary>
@@ -114,29 +114,16 @@ namespace Templ
             Filename = fileName;
         }
 
-        /*
-        /// <summary>
-        /// MVC ActionResult to return document as file
-        /// </summary>
-        /// <returns></returns>
-        public FileContentResult MvcResponse()
-        {
-            return new FileContentResult(this.Bytes, TemplBuilder.MIMEType);
-        }
-        */
-
         /// <summary>
         /// (debug) write a message to the end of the document
         /// </summary>
         /// <param name="s"></param>
         public void Logp(string s)
         {
-        #if DEBUG
             if (LogEnabled)
             {
                 Doc.InsertParagraph(s);
             }
-        #endif
         }
 
         /// <summary>

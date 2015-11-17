@@ -32,6 +32,5 @@ namespace Templ
             Builder.Build(model);
             return this;
         }
-        //public FileContentResult Response => Builder.MvcResponse();
     }
 }

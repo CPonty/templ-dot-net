@@ -21,6 +21,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\Templ.xml</DocumentationFile>
+    <NoWarn>CS1591</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -47,11 +48,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DocxCore.cs" />
-    <Compile Include="DocxMatches.cs" />
-    <Compile Include="DocxModel.cs" />
-    <Compile Include="DocxModules.cs" />
-    <Compile Include="DocxTemplate.cs" />
+    <Compile Include="Graphic.cs" />
+    <Compile Include="Regex.cs" />
+    <Compile Include="Builder.cs" />
+    <Compile Include="Matches.cs" />
+    <Compile Include="ModelEntry.cs" />
+    <Compile Include="Modules.cs" />
+    <Compile Include="Templ.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

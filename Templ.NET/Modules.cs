@@ -30,16 +30,13 @@ namespace Templ
         /// Container-specific handler.
         /// Modify the underlying container; mark expired to delete
         /// </summary>
-        /// <typeparam name="T"></typeparam>
         /// <param name="m"></param>
-        /// <param name="docBuilder"></param>
         public abstract T Handler(T m);
 
         /// <summary>
         /// Container-specific finder.
         /// Get all instances from the document.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
         /// <param name="rxp"></param>
         public abstract IEnumerable<T> FindAll(TemplRegex rxp);
     }
@@ -69,8 +66,10 @@ namespace Templ
     /* ---------------------------------------------------------------------- */
     /* ---------------------------------------------------------------------- */
 
-    /*  This is a utility module, instantiated  by others to handle a sub-scope of the document.
-        Don't add it to the main Modules collection. If you use the default constructor it won't do anything. */
+        /// <summary>
+        ///This is a utility module, instantiated  by others to handle a sub-scope of the document.
+        ///Don't add it to the main Modules collection. If you use the default constructor it won't do anything.
+        /// </summary>
     public class TemplSubcollectionModule : TemplModule<TemplMatchText>
     {
         private string Path = "";
@@ -110,7 +109,6 @@ namespace Templ
                 throw new FormatException($"Templ: Subcollection placeholder has too few :-separated fields: \"{payload}\"");
             }
             nameParts[1] = $"{Path}{(nameParts[1].Length == 0 || Path.Length == 0?"":".")}{nameParts[1]}";
-            //TODO remove '|' once it works
             return $"{{{nameParts.Aggregate((a, b) => $"{a}:{b}") }}}";
         }
     }
@@ -256,7 +254,6 @@ namespace Templ
             m.Row.Remove();
             m.Removed = true;
             return m;
-            //TODO
         }
         /// <summary>
         /// Clear text and images from all paragraphs in cell.
@@ -436,7 +433,7 @@ namespace Templ
         /// <summary>
         /// Requires user to open in Word and click "Update table of contents". We cannot auto-populate it here.
         /// </summary>
-        /// <param name="doc"></param>
+        /// <param name="m"></param>
         /// <returns></returns>
         public override TemplMatchText Handler(TemplMatchText m)
         {

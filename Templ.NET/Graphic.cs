@@ -7,7 +7,7 @@ using Novacode;
 namespace Templ
 {
     /// <summary>
-    /// Used to store/load images & generate (scaled) pictures.
+    /// Used to store/load images and generate (scaled) pictures.
     /// </summary>
     public class TemplGraphic
     {
