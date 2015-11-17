@@ -6,6 +6,7 @@ namespace Templ
 {
     public class Templ
     {
+        public const string DocxMIMEType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
         private TemplBuilder Builder;
 
         public byte[] Bytes => Builder.Bytes;

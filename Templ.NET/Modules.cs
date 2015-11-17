@@ -7,19 +7,35 @@ namespace Templ
 {
     public abstract class TemplModule<T> : TemplModule where T : TemplMatchPara, new()
     {
-        public new Func<T, TemplBuilder, T> CustomHandler = (m, docBuilder) => m;
+        public static uint MinFields;
+        public static uint MaxFields;
+        public new Func<T, DocX, object, T> CustomHandler = (m, doc, model) => m;
 
         public TemplModule(String name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
 
+        private T CheckFieldCount(T m)
+        {
+            var l = m.Fields.Length;
+            if (l < MinFields)
+            {
+                throw new FormatException($"Templ: Module \"{GetType()}\" found a placeholder \"{m.Placeholder}\" with too few :-separated fields ({l} vs {MinFields})");
+            }
+            if (l > MaxFields)
+            {
+                throw new FormatException($"Templ: Module \"{GetType()}\" found a placeholder \"{m.Placeholder}\" with too many :-separated fields ({l} vs {MaxFields})");
+            }
+            return m;
+        }
         public void BuildFromScope(IEnumerable<T> scope)
         {
             // Note how we are constantly "committing" the changes using ToList().
             // This ensures order is preserved (e.g. all "finds" happen before all "handler"s)
-            scope.Select( m => Handler(m)).ToList()
+            scope.Select( m => CheckFieldCount(m) ).ToList()
+                 .Select( m => Handler(m)).ToList()
                  .Where(  m =>!m.RemoveExpired()).ToList()
-                 .Select( m => CustomHandler(m, DocBuilder)).ToList()
+                 .Select( m => CustomHandler(m, Doc, Model)).ToList()
                  .ForEach(m => m.RemoveExpired());
         }
         public override void Build()
@@ -44,7 +60,9 @@ namespace Templ
     public abstract class TemplModule
     {
         public string Name;
-        public TemplBuilder DocBuilder;
+        private TemplBuilder DocBuilder;
+        public DocX Doc => DocBuilder.Doc;
+        public object Model => DocBuilder.Model;
         public TemplRegex[] Regexes;
         public Func<object, TemplBuilder, object> CustomHandler;
 
@@ -72,6 +90,8 @@ namespace Templ
         /// </summary>
     public class TemplSubcollectionModule : TemplModule<TemplMatchText>
     {
+        public static new uint MinFields = 2;
+        public static new uint MaxFields = 99;
         private string Path = "";
         private IEnumerable<Paragraph> Paragraphs = new List<Paragraph>();
 
@@ -93,9 +113,9 @@ namespace Templ
         {
             if (m is TemplMatchPicture)
             {
-                return (m as TemplMatchPicture).SetDescription(ParentPath(m.Name));
+                return (m as TemplMatchPicture).SetDescription(ParentPath(m));
             }
-            return m.ToText(ParentPath(m.Name));
+            return m.ToText(ParentPath(m));
         }
         public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
@@ -103,76 +123,70 @@ namespace Templ
             return TemplMatchText.Find(rxp, Paragraphs).Concat(
                    TemplMatchPicture.Find(rxp, Paragraphs).Cast<TemplMatchText>());
         }
-        public string ParentPath(string payload)
+        public string ParentPath(TemplMatchText m)
         {
-            var nameParts = payload.Split(':');
-            if (nameParts.Length < 2)
-            {
-                throw new FormatException($"Templ: Subcollection placeholder has too few :-separated fields: \"{payload}\"");
-            }
-            nameParts[1] = $"{Path}{(nameParts[1].Length == 0 || Path.Length == 0?"":".")}{nameParts[1]}";
-            return $"{{{nameParts.Aggregate((a, b) => $"{a}:{b}") }}}";
+            m.Fields[1] = $"{Path}{(m.Fields[1].Length == 0 || Path.Length == 0?"":".")}{m.Fields[1]}";
+            return $"{{{m.Fields.Aggregate((a, b) => $"{a}:{b}") }}}";
         }
     }
 
     public class TemplSectionModule : TemplModule<TemplMatchSection>
     {
+        public static new uint MaxFields = 2;
         public TemplSectionModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
         public override TemplMatchSection Handler(TemplMatchSection m)
         {
             m.RemovePlaceholder();
-            var nameParts = m.Name.Split(':');
-            // 1 part: placeholder name is just a label, nothing to do.
-            // Users can implement their own section handler to switch off this label.
-            if (nameParts.Length == 1)
+            switch (m.Fields.Length)
             {
-                return m;
+                case 1:
+                    // 1 part: placeholder is just a label, nothing to do.
+                    // Users can implement their own section handler to switch off this label.
+                    return m;
+                case 2:
+                    // 2 parts: second part is a bool expression in the model for 'delete section'
+                    m.Expired = TemplModelEntry.Get(Model, m.Fields[1]).AsType<bool>();
+                    return m;
+                default:
+                    throw new FormatException($"Templ: Section {m.Body} has a malformed tag body (too many occurrences of :)");
             }
-            // 3+ parts: placeholder name is malformed
-            if (nameParts.Length > 2)
-            {
-                throw new FormatException($"Templ: Section {m.Name} has a malformed tag body (too many occurrences of :)");
-            }
-            // 2 parts: second part is a bool expression in the model for 'delete section'
-            m.Expired = TemplModelEntry.Get(DocBuilder.Model, nameParts[1]).AsType<bool>();
-            return m;
         }
         public override IEnumerable<TemplMatchSection> FindAll(TemplRegex rxp)
         {
             // Expecting only 1 match per section
-            return TemplMatchSection.Find(rxp, DocBuilder.Doc.GetSections(), 1);
+            return TemplMatchSection.Find(rxp, Doc.GetSections(), 1);
         }
     }
     public class TemplTableModule : TemplModule<TemplMatchTable>
     {
+        public static new uint MaxFields = 2;
         public TemplTableModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
         public override TemplMatchTable Handler(TemplMatchTable m)
         {
             m.RemovePlaceholder();
-            var nameParts = m.Name.Split(':');
-            // 1 part: placeholder name is just a label, nothing to do.
-            // Users can implement their own table handler to switch off this label.
-            if (nameParts.Length == 1)
+            switch (m.Fields.Length)
             {
-                return m;
+                case 1:
+                    // 1 part: placeholder name is just a label, nothing to do.
+                    // Users can implement their own table handler to switch off this label.
+                    return m;
+                case 2:
+                    // 2 parts: second part is a bool expression in the model for 'delete table'
+                    m.Expired = TemplModelEntry.Get(Model, m.Fields[1]).AsType<bool>();
+                    return m;
+                default:
+                    // 3+ parts: placeholder name is malformed
+                    throw new FormatException($"Templ: Table \"{m.Body}\" has a malformed tag body (too many occurrences of :)");
             }
-            // 3+ parts: placeholder name is malformed
-            if (nameParts.Length > 2)
-            {
-                throw new FormatException($"Templ: Table \"{m.Name}\" has a malformed tag body (too many occurrences of :)");
-            }
-            // 2 parts: second part is a bool expression in the model for 'delete table'
-            m.Expired = TemplModelEntry.Get(DocBuilder.Model, nameParts[1]).AsType<bool>();
-            return m;
         }
         public override IEnumerable<TemplMatchTable> FindAll(TemplRegex rxp)
         {
             // Expecting only 1 match per table
-            return TemplMatchTable.Find(rxp, DocBuilder.Doc.Tables, 1);
+            return TemplMatchTable.Find(rxp, Doc.Tables, 1);
         }
     }
     public class TemplRepeatingRowModule : TemplModule<TemplMatchRow>
@@ -182,17 +196,17 @@ namespace Templ
         { }
         public override TemplMatchRow Handler(TemplMatchRow m)
         {
-            var e = TemplModelEntry.Get(DocBuilder.Model, m.Name);
+            var e = TemplModelEntry.Get(Model, m.Body);
             var idx = m.RowIndex;
             if (idx < 0)
             {
-                throw new IndexOutOfRangeException($"Templ: Row match does not have an index in a table for match \"{m.Name}\"");
+                throw new IndexOutOfRangeException($"Templ: Row match does not have an index in a table for match \"{m.Body}\"");
             }
             m.RemovePlaceholder();
             foreach (var key in e.ToStringKeys())
             {
                 var r = m.Table.InsertRow(m.Row, ++idx);
-                new TemplSubcollectionModule().BuildFromScope(r.Paragraphs, $"{m.Name}[{key}]");
+                new TemplSubcollectionModule().BuildFromScope(r.Paragraphs, $"{m.Body}[{key}]");
             }
             m.Row.Remove();
             m.Removed = true;
@@ -201,7 +215,7 @@ namespace Templ
         public override IEnumerable<TemplMatchRow> FindAll(TemplRegex rxp)
         {
             // Expecting only 1 match per row
-            return TemplMatchRow.Find(rxp, DocBuilder.Doc.Tables, 1);
+            return TemplMatchRow.Find(rxp, Doc.Tables, 1);
         }
     }
     public class TemplRepeatingCellModule : TemplModule<TemplMatchCell>
@@ -212,37 +226,35 @@ namespace Templ
         public override TemplMatchCell Handler(TemplMatchCell m)
         {
             var width = m.Table.Rows.First().Cells.Count;
-            var keys = TemplModelEntry.Get(DocBuilder.Model, m.Name).ToStringKeys();
+            var keys = TemplModelEntry.Get(Model, m.Body).ToStringKeys();
             var nrows = keys.Count() / width + 1;
-            var rowIdx = m.RowIndex;
-            var keyIdx = m.CellIndex;
-            if (rowIdx < 0)
+            if (m.RowIndex < 0)
             {
-                throw new IndexOutOfRangeException($"Templ: Cell match does not have a row index in a table for match \"{m.Name}\"");
+                throw new IndexOutOfRangeException($"Templ: Cell match does not have a row index in a table for match \"{m.Body}\"");
             }
-            if (keyIdx < 0)
+            if (m.CellIndex < 0)
             {
-                throw new IndexOutOfRangeException($"Templ: Cell match does not have a cell index in a table for match \"{m.Name}\"");
+                throw new IndexOutOfRangeException($"Templ: Cell match does not have a cell index in a table for match \"{m.Body}\"");
             }
             m.RemovePlaceholder();
             for (int n=0; n< width; n++)
             {
-                if (n != keyIdx)
+                if (n != m.CellIndex)
                 {
                     CellCopy(m.Cell, m.Row.Cells[n]);
                 }
             }
             Row row = m.Row;
-            for (int kIdx = 0; kIdx < nrows*width; kIdx++)
+            for (int keyIdx = 0; keyIdx < nrows*width; keyIdx++)
             {
-                if (kIdx % width == 0)
+                if (keyIdx % width == 0)
                 {
-                    row = m.Table.InsertRow(m.Row, ++rowIdx);
+                    row = m.Table.InsertRow(m.Row, m.RowIndex + keyIdx/width + 1);
                 }
-                Cell cell = row.Cells[kIdx % width];
-                if (kIdx < keys.Count())
+                Cell cell = row.Cells[keyIdx % width];
+                if (keyIdx < keys.Count())
                 {
-                    new TemplSubcollectionModule().BuildFromScope(cell.Paragraphs, $"{m.Name}[{keys[kIdx]}]");
+                    new TemplSubcollectionModule().BuildFromScope(cell.Paragraphs, $"{m.Body}[{keys[keyIdx]}]");
                 }
                 else
                 {
@@ -294,7 +306,7 @@ namespace Templ
         public override IEnumerable<TemplMatchCell> FindAll(TemplRegex rxp)
         {
             // Expecting only 1 match per cell
-            return TemplMatchCell.Find(rxp, DocBuilder.Doc.Tables, 1);
+            return TemplMatchCell.Find(rxp, Doc.Tables, 1);
         }
     }
     public class TemplRepeatingTextModule : TemplModule<TemplMatchText>
@@ -304,12 +316,12 @@ namespace Templ
         { }
         public override TemplMatchText Handler(TemplMatchText m)
         {
-            var e = TemplModelEntry.Get(DocBuilder.Model, m.Name);
+            var e = TemplModelEntry.Get(Model, m.Body);
             m.RemovePlaceholder();
             foreach (var key in e.ToStringKeys())
             {
                 var p = m.Paragraph.InsertParagraphAfterSelf(m.Paragraph);
-                new TemplSubcollectionModule().BuildFromScope(new Paragraph[] { p }, $"{m.Name}[{key}]");
+                new TemplSubcollectionModule().BuildFromScope(new Paragraph[] { p }, $"{m.Body}[{key}]");
             }
             m.Paragraph.Remove(false);
             m.Removed = true;
@@ -318,7 +330,7 @@ namespace Templ
         public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
             // Expecting only 1 match per paragraph
-            return TemplMatchText.Find(rxp, DocBuilder.Doc.Paragraphs, 1);
+            return TemplMatchText.Find(rxp, Doc.Paragraphs, 1);
         }
     }
     public class TemplPictureReplaceModule : TemplModule<TemplMatchPicture>
@@ -328,72 +340,74 @@ namespace Templ
         { }
         public override TemplMatchPicture Handler(TemplMatchPicture m)
         {
-            if (m.Name.Split(':').Length > 1)
+            if (m.Fields.Length > 1)
             {
-                throw new FormatException($"Templ: Template Picture {m.Name} has a malformed tag body (too many occurrences of :)");
+                throw new FormatException($"Templ: Template Picture {m.Body} has a malformed tag body (too many occurrences of :)");
             }
-            var e = TemplModelEntry.Get(DocBuilder.Model, m.Name);
+            var e = TemplModelEntry.Get(Model, m.Body);
             var w = m.Picture.Width;
             // Single picture: add text placeholder, expire the placeholder picture
             if (e.Value is TemplGraphic)
             {
-                return m.ToText($"{{pic:{m.Name}:{w}}}");
+                return m.ToText($"{{pic:{m.Body}:{w}}}");
             }
             // Multiple pictures: add repeating list placeholder, expire the placeholder picture
             if (e.Value is TemplGraphic[] || e.Value is ICollection<TemplGraphic>)
             {
-                return m.ToText($"{{li:{m.Name}}}{{$:pic::{w}}}");
+                return m.ToText($"{{li:{m.Body}}}{{$:pic::{w}}}");
             }
             throw new InvalidCastException($"Templ: Failed to retrieve picture(s) from the model at path \"{e.Path}\"; its actual type is \"{e.Type}\"");
         }
         public override IEnumerable<TemplMatchPicture> FindAll(TemplRegex rxp)
         {
-            return TemplMatchPicture.Find(rxp, DocBuilder.Doc.Paragraphs);
+            return TemplMatchPicture.Find(rxp, Doc.Paragraphs);
         }
     }
     public class TemplPicturePlaceholderModule : TemplModule<TemplMatchText>
     {
+        public static new uint MaxFields = 2;
         public TemplPicturePlaceholderModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
         public override TemplMatchText Handler(TemplMatchText m)
         {
-            var nameParts = m.Name.Split(':');
             int w = -1;
-            // 3+ parts: placeholder name is malformed
-            if (nameParts.Length > 2)
+            switch (m.Fields.Length)
             {
-                throw new FormatException($"Templ: Picture {m.Name} has a malformed tag body (too many occurrences of :)");
+                case 1:
+                    break;
+                case 2:
+                    // 2 parts: second part is an int for the width
+                    if (!int.TryParse(m.Fields[1], out w))
+                    {
+                        throw new FormatException($"Templ: Picture {m.Body} has a non-integer value for width ({m.Fields[1]})");
+                    }
+                    break;
+                default:
+                    // 3+ parts: placeholder body is malformed
+                    throw new FormatException($"Templ: Picture {m.Body} has a malformed tag body (too many occurrences of :)");
             }
-            // 2 parts: second part is an int for the width
-            if (nameParts.Length == 2)
-            {
-                if (!int.TryParse(nameParts[1], out w))
-                {
-                    throw new FormatException($"Templ: Picture {m.Name} has a non-integer value for width ({nameParts[1]})");
-                }
-            }
-            var e = TemplModelEntry.Get(DocBuilder.Model, nameParts[0]);
+            var e = TemplModelEntry.Get(Model, m.Fields[0]);
             //Try as array, as collection, as single
             if (e.Value is TemplGraphic)
             {
-                return m.ToPicture((e.Value as TemplGraphic).Load(DocBuilder.Doc), w);
+                return m.ToPicture((e.Value as TemplGraphic).Load(Doc), w);
             }
             if (e.Value is TemplGraphic[])
             {
                 return m.ToPictures((e.Value as TemplGraphic[])
-                        .Select(g => g.Load(DocBuilder.Doc)).ToArray(), w);
+                        .Select(g => g.Load(Doc)).ToArray(), w);
             }
             if (e.Value is ICollection<TemplGraphic>)
             {
                 return m.ToPictures((e.Value as ICollection<TemplGraphic>)
-                        .Select(g => g.Load(DocBuilder.Doc)).ToList(), w);
+                        .Select(g => g.Load(Doc)).ToList(), w);
             }
             throw new InvalidCastException($"Templ: Failed to retrieve picture(s) from the model at path \"{e.Path}\"; its actual type is \"{e.Type}\"");
         }
         public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
-            return TemplMatchText.Find(rxp, DocBuilder.Doc.Paragraphs);
+            return TemplMatchText.Find(rxp, Doc.Paragraphs);
         }
     }
     public class TemplTextModule : TemplModule<TemplMatchText>
@@ -403,12 +417,12 @@ namespace Templ
         { }
         public override TemplMatchText Handler(TemplMatchText m)
         {
-            m.ToText(TemplModelEntry.Get(DocBuilder.Model, m.Name).ToString());
+            m.ToText(TemplModelEntry.Get(Model, m.Body).ToString());
             return m;
         }
         public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
-            return TemplMatchText.Find(rxp, DocBuilder.Doc.Paragraphs);
+            return TemplMatchText.Find(rxp, Doc.Paragraphs);
         }
     }
     public class TemplTOCModule : TemplModule<TemplMatchText>
@@ -431,7 +445,7 @@ namespace Templ
             {
                 return m;
             }
-            DocBuilder.Doc.InsertTableOfContents(m.Paragraph, m.Name, Switches);
+            Doc.InsertTableOfContents(m.Paragraph, m.Body, Switches);
             /* Additional options:
                 string headerStyle = null
                 int maxIncludeLevel = 3
@@ -441,7 +455,7 @@ namespace Templ
         }
         public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
-            return TemplMatchText.Find(rxp, DocBuilder.Doc.Paragraphs);
+            return TemplMatchText.Find(rxp, Doc.Paragraphs);
         }
     }
     public class TemplCommentsModule : TemplModule<TemplMatchText>
@@ -456,7 +470,7 @@ namespace Templ
         }
         public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
-            return TemplMatchText.Find(rxp, DocBuilder.Doc.Paragraphs);
+            return TemplMatchText.Find(rxp, Doc.Paragraphs);
         }
     }
 }

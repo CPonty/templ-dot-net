@@ -12,9 +12,10 @@ namespace Templ
         public bool Expired = false;
         public bool Removed = false;
         protected bool RemovedPlaceholder = false;
-        public string Name;
+        public string Body;
+        public string[] Fields => Body.Split(':');
         public TemplRegex Regex;
-        public string Placeholder => Regex.Text(Name);
+        public string Placeholder => Regex.Text(Body);
         public Regex Pattern => Regex.Pattern;
 
         // if someone tries to implement single-result search: .DefaultIfEmpty(new T()).First();
@@ -42,7 +43,7 @@ namespace Templ
             {
                 Success = true,
                 Regex = rgx,
-                Name = m.Groups[1].Value,
+                Body = m.Groups[1].Value,
             });
         }
     }
