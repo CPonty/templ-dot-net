@@ -99,7 +99,9 @@ namespace Templ
         }
         public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
-            return TemplMatchText.Find(rxp, Paragraphs).Concat(TemplMatchPicture.Find(rxp, Paragraphs).Cast<TemplMatchText>());
+            // Get both text and picture matches. Contact is possible because MatchText is MatchPicture's base type.
+            return TemplMatchText.Find(rxp, Paragraphs).Concat(
+                   TemplMatchPicture.Find(rxp, Paragraphs).Cast<TemplMatchText>());
         }
         public string ParentPath(string payload)
         {
@@ -139,8 +141,8 @@ namespace Templ
         }
         public override IEnumerable<TemplMatchSection> FindAll(TemplRegex rxp)
         {
-            // "Take 1", a section should only have one naming tag.
-            return DocBuilder.Doc.GetSections().SelectMany(sec => TemplMatchSection.Find(rxp, sec).Take(1));
+            // Expecting only 1 match per section
+            return TemplMatchSection.Find(rxp, DocBuilder.Doc.GetSections(), 1);
         }
     }
     public class TemplTableModule : TemplModule<TemplMatchTable>
@@ -169,8 +171,8 @@ namespace Templ
         }
         public override IEnumerable<TemplMatchTable> FindAll(TemplRegex rxp)
         {
-            // "Take 1", a table should only have one naming tag.
-            return DocBuilder.Doc.Tables.SelectMany(t => TemplMatchTable.Find(rxp, t).Take(1));
+            // Expecting only 1 match per table
+            return TemplMatchTable.Find(rxp, DocBuilder.Doc.Tables, 1);
         }
     }
     public class TemplRepeatingRowModule : TemplModule<TemplMatchRow>
@@ -198,12 +200,8 @@ namespace Templ
         }
         public override IEnumerable<TemplMatchRow> FindAll(TemplRegex rxp)
         {
-            // Takes 1 per row. A row should only have one collection tag.
-            return DocBuilder.Doc.Tables.SelectMany(
-                t => Enumerable.Range(0, t.RowCount).SelectMany(
-                    i => TemplMatchRow.Find(rxp, t, i).Take(1)
-                )
-            );
+            // Expecting only 1 match per row
+            return TemplMatchRow.Find(rxp, DocBuilder.Doc.Tables, 1);
         }
     }
     public class TemplRepeatingCellModule : TemplModule<TemplMatchCell>
@@ -295,14 +293,8 @@ namespace Templ
         }
         public override IEnumerable<TemplMatchCell> FindAll(TemplRegex rxp)
         {
-            // Takes 1 per row. A row should only have one repeating cell.
-            return DocBuilder.Doc.Tables.SelectMany(
-                t => Enumerable.Range(0, t.RowCount).SelectMany(
-                    rr => Enumerable.Range(0, t.Rows[rr].Cells.Count).SelectMany(
-                        cc => TemplMatchCell.Find(rxp, t, rr, cc).Take(1)
-                    )
-                )
-            );
+            // Expecting only 1 match per cell
+            return TemplMatchCell.Find(rxp, DocBuilder.Doc.Tables, 1);
         }
     }
     public class TemplRepeatingTextModule : TemplModule<TemplMatchText>
@@ -325,10 +317,8 @@ namespace Templ
         }
         public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
-            // Takes 1 per paragraph. A paragraph should only have one repeat entry.
-            return DocBuilder.Doc.Paragraphs.SelectMany(
-                p => TemplMatchText.Find(rxp, p).Take(1)
-            );
+            // Expecting only 1 match per paragraph
+            return TemplMatchText.Find(rxp, DocBuilder.Doc.Paragraphs, 1);
         }
     }
     public class TemplPictureReplaceModule : TemplModule<TemplMatchPicture>

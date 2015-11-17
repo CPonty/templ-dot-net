@@ -22,6 +22,10 @@ namespace Templ
         {
             return paragraphs.SelectMany(p => Find<T>(rgx, p));
         }
+        public static IEnumerable<T> Find<T>(TemplRegex rgx, IEnumerable<Paragraph> paragraphs, int n) where T : TemplMatchPara, new()
+        {
+            return paragraphs.SelectMany(p => Find<T>(rgx, p).Take(n));
+        }
         public static IEnumerable<T> Find<T>(TemplRegex rgx, Paragraph p) where T : TemplMatchPara, new()
         {
             var P = p;
@@ -161,6 +165,10 @@ namespace Templ
         {
             return paragraphs.SelectMany(p => Find(rxp, p));
         }
+        public static IEnumerable<TemplMatchText> Find(TemplRegex rxp, IEnumerable<Paragraph> paragraphs, int n) 
+        {
+            return paragraphs.SelectMany(p => Find(rxp, p).Take(n));
+        }
         public static IEnumerable<TemplMatchText> Find(TemplRegex rxp, Paragraph p) 
         {
             return Find<TemplMatchText>(rxp, p);
@@ -178,6 +186,10 @@ namespace Templ
         {
             return sections.SelectMany(sec => Find(rxp, sec));
         }
+        public static IEnumerable<TemplMatchSection> Find(TemplRegex rxp, IEnumerable<Section> sections, int n) 
+        {
+            return sections.SelectMany(sec => Find(rxp, sec).Take(n));
+        }
         public static IEnumerable<TemplMatchSection> Find(TemplRegex rxp, Section sec) 
         {
             return Find<TemplMatchSection>(rxp, sec.SectionParagraphs).Select(m =>
@@ -189,10 +201,8 @@ namespace Templ
         public override void Remove()
         {
             RemovePlaceholder();
-            //foreach (Paragraph p in Section.SectionParagraphs.Skip(1).Where(p => p.Text.Length > 0))
             foreach (Paragraph p in Section.SectionParagraphs.Skip(1))
             {
-                //p.RemoveText(0, p.Text.Length);
                 p.Pictures.ForEach(pic => pic.Remove());
                 p.FollowingTable?.Remove();
                 p.Remove(false);
@@ -204,6 +214,10 @@ namespace Templ
     {
         public Table Table;
 
+        public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, IEnumerable<Table> tables, int n) 
+        {
+            return tables.SelectMany(t => Find(rxp, t).Take(n));
+        }
         public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, IEnumerable<Table> tables) 
         {
             return tables.SelectMany(t => Find(rxp, t));
@@ -222,16 +236,24 @@ namespace Templ
         public Row Row;
         public int RowIndex;
 
+        public static new IEnumerable<TemplMatchRow> Find(TemplRegex rxp, IEnumerable<Table> tables, int n)
+        {
+            return tables.SelectMany(t => Find(rxp, t, n));
+        }
         public static new IEnumerable<TemplMatchRow> Find(TemplRegex rxp, IEnumerable<Table> tables)
         {
             return tables.SelectMany(t => Find(rxp, t));
         }
         public static new IEnumerable<TemplMatchRow> Find(TemplRegex rxp, Table t)
         {
-            return Enumerable.Range(0,t.RowCount).SelectMany(rIdx => Find(rxp, t, rIdx));
+            return Enumerable.Range(0,t.RowCount).SelectMany(rIdx => FindInRow(rxp, t, rIdx));
+        }
+        public static IEnumerable<TemplMatchRow> Find(TemplRegex rxp, Table t, int n)
+        {
+            return Enumerable.Range(0,t.RowCount).SelectMany(rIdx => FindInRow(rxp, t, rIdx).Take(n));
         }
 
-        public static IEnumerable<TemplMatchRow> Find(TemplRegex rxp, Table t, int rowIndex)
+        private static IEnumerable<TemplMatchRow> FindInRow(TemplRegex rxp, Table t, int rowIndex)
         {
             var r = t.Rows[rowIndex];
             return Find<TemplMatchRow>(rxp, r.Cells.SelectMany(c => c.Paragraphs)).Select(m =>
@@ -252,17 +274,29 @@ namespace Templ
         {
             return tables.SelectMany(t => Find(rxp, t));
         }
+        public static new IEnumerable<TemplMatchCell> Find(TemplRegex rxp, IEnumerable<Table> tables, int n)
+        {
+            return tables.SelectMany(t => Find(rxp, t, n));
+        }
         public static new IEnumerable<TemplMatchCell> Find(TemplRegex rxp, Table t)
         {
-            return Enumerable.Range(0,t.RowCount).SelectMany(rowIdx => Find(rxp, t, rowIdx));
+            return Enumerable.Range(0,t.RowCount).SelectMany(rowIdx => FindInRow(rxp, t, rowIdx));
         }
-
-        public static new IEnumerable<TemplMatchCell> Find(TemplRegex rxp, Table t, int rowIdx)
+        public static new IEnumerable<TemplMatchCell> Find(TemplRegex rxp, Table t, int n)
         {
-            return Enumerable.Range(0,t.Rows[rowIdx].Cells.Count).SelectMany(cellIdx => Find(rxp, t, rowIdx, cellIdx));
+            return Enumerable.Range(0,t.RowCount).SelectMany(rowIdx => FindInRow(rxp, t, rowIdx, n));
         }
 
-        public static IEnumerable<TemplMatchCell> Find(TemplRegex rxp, Table t, int rowIdx, int cellIdx)
+        private static IEnumerable<TemplMatchCell> FindInRow(TemplRegex rxp, Table t, int rowIdx)
+        {
+            return Enumerable.Range(0,t.Rows[rowIdx].Cells.Count).SelectMany(cellIdx => FindInCell(rxp, t, rowIdx, cellIdx));
+        }
+        private static IEnumerable<TemplMatchCell> FindInRow(TemplRegex rxp, Table t, int rowIdx, int n)
+        {
+            return Enumerable.Range(0,t.Rows[rowIdx].Cells.Count).SelectMany(cellIdx => FindInCell(rxp, t, rowIdx, cellIdx).Take(1));
+        }
+
+        private static IEnumerable<TemplMatchCell> FindInCell(TemplRegex rxp, Table t, int rowIdx, int cellIdx)
         {
             var r = t.Rows[rowIdx];
             var c = r.Cells[cellIdx];
