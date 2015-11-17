@@ -2,28 +2,27 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Web;
 using Novacode;
 
-namespace DocXMVC
+namespace Templ
 {
-    public abstract class DocxMatch
+    public abstract class TemplMatch
     {
         public bool Success = false;
         public bool Expired = false;
         public bool Removed = false;
         protected bool RemovedPlaceholder = false;
         public string Name;
-        public DocxRegex Regex;
+        public TemplRegex Regex;
         public string Placeholder => Regex.Text(Name);
         public Regex Pattern => Regex.Pattern;
 
         // if someone tries to implement single-result search: .DefaultIfEmpty(new T()).First();
-        public static IEnumerable<T> Find<T>(DocxRegex rgx, IEnumerable<Paragraph> paragraphs) where T : DocxMatchPara, new()
+        public static IEnumerable<T> Find<T>(TemplRegex rgx, IEnumerable<Paragraph> paragraphs) where T : TemplMatchPara, new()
         {
             return paragraphs.SelectMany(p => Find<T>(rgx, p));
         }
-        public static IEnumerable<T> Find<T>(DocxRegex rgx, Paragraph p) where T : DocxMatchPara, new()
+        public static IEnumerable<T> Find<T>(TemplRegex rgx, Paragraph p) where T : TemplMatchPara, new()
         {
             var P = p;
             var t = P.Text;
@@ -33,7 +32,7 @@ namespace DocXMVC
                 return m;
             });
         }
-        public static IEnumerable<T> Find<T>(DocxRegex rgx, string s) where T : DocxMatch, new()
+        public static IEnumerable<T> Find<T>(TemplRegex rgx, string s) where T : TemplMatch, new()
         {
             return rgx.Pattern.Matches(s).Cast<Match>().Where(m => m.Success).Select(m => new T()
             {
@@ -43,7 +42,7 @@ namespace DocXMVC
             });
         }
     }
-    public abstract class DocxMatchPara : DocxMatch
+    public abstract class TemplMatchPara : TemplMatch
     {
         public Paragraph Paragraph;
 
@@ -53,17 +52,17 @@ namespace DocXMVC
             Paragraph.InsertText(idx, text);
         }
 
-        public T ToText<T>(string text) where T : DocxMatchPara, new()
+        public T ToText<T>(string text) where T : TemplMatchPara, new()
         {
             // Insert Text at each match, then remove placeholder
             Paragraph.ReplaceText(Placeholder, text);
             RemovedPlaceholder = true;
             return (T)this;
         }
-        public Paragraph AddBefore<T>(string text) where T : DocxMatchPara, new() => Paragraph.InsertParagraphBeforeSelf(text);
-        public Paragraph AddAfter<T>(string text) where T : DocxMatchPara, new() => Paragraph.InsertParagraphAfterSelf(text);
+        public Paragraph AddBefore<T>(string text) where T : TemplMatchPara, new() => Paragraph.InsertParagraphBeforeSelf(text);
+        public Paragraph AddAfter<T>(string text) where T : TemplMatchPara, new() => Paragraph.InsertParagraphAfterSelf(text);
 
-        private void InsertPicture(DocxGraphic graphic, int width)
+        private void InsertPicture(TemplGraphic graphic, int width)
         {
             // Simple. Picture at index(es). Ensure you load picture first.
             Paragraph.FindAll(Placeholder).ForEach(idx =>
@@ -79,7 +78,7 @@ namespace DocXMVC
                 Paragraph.Alignment = (graphic.Alignment ?? Paragraph.Alignment);
             });
         }
-        public T ToPicture<T>(DocxGraphic graphic, int width) where T : DocxMatchPara, new()
+        public T ToPicture<T>(TemplGraphic graphic, int width) where T : TemplMatchPara, new()
         {
             // Use InsertPicture at each match, then remove placeholder
             if (Removed || RemovedPlaceholder || Expired)
@@ -91,12 +90,12 @@ namespace DocXMVC
             return (T)this;
         }
 
-        public T ToPictures<T>(ICollection<DocxGraphic> graphics, int width) where T : DocxMatchPara, new()
+        public T ToPictures<T>(ICollection<TemplGraphic> graphics, int width) where T : TemplMatchPara, new()
         {
             return ToPictures<T>(graphics.ToArray(), width);
         }
 
-        public T ToPictures<T>(DocxGraphic[] graphics, int width) where T : DocxMatchPara, new()
+        public T ToPictures<T>(TemplGraphic[] graphics, int width) where T : TemplMatchPara, new()
         {
             if (Removed || RemovedPlaceholder || Expired)
             {
@@ -149,39 +148,39 @@ namespace DocXMVC
     /* ---------------------------------------------------------------------- */
     /* ---------------------------------------------------------------------- */
 
-    public class DocxMatchString : DocxMatch
+    public class TemplMatchString : TemplMatch
     {
-        public static IEnumerable<DocxMatchString> Find(DocxRegex rxp, string s)
+        public static IEnumerable<TemplMatchString> Find(TemplRegex rxp, string s)
         {
-            return Find<DocxMatchString>(rxp, s);
+            return Find<TemplMatchString>(rxp, s);
         }
     }
-    public class DocxMatchText : DocxMatchPara
+    public class TemplMatchText : TemplMatchPara
     {
-        public static IEnumerable<DocxMatchText> Find(DocxRegex rxp, IEnumerable<Paragraph> paragraphs) 
+        public static IEnumerable<TemplMatchText> Find(TemplRegex rxp, IEnumerable<Paragraph> paragraphs) 
         {
             return paragraphs.SelectMany(p => Find(rxp, p));
         }
-        public static IEnumerable<DocxMatchText> Find(DocxRegex rxp, Paragraph p) 
+        public static IEnumerable<TemplMatchText> Find(TemplRegex rxp, Paragraph p) 
         {
-            return Find<DocxMatchText>(rxp, p);
+            return Find<TemplMatchText>(rxp, p);
         }
-        public DocxMatchText ToText(string text) => base.ToText<DocxMatchText>(text);
-        public DocxMatchText ToPicture(DocxGraphic g, int w) => base.ToPicture<DocxMatchText>(g, w);
-        public DocxMatchText ToPictures(DocxGraphic[] g, int w) => base.ToPictures<DocxMatchText>(g, w);
-        public DocxMatchText ToPictures(ICollection<DocxGraphic> g, int w) => base.ToPictures<DocxMatchText>(g, w);
+        public TemplMatchText ToText(string text) => base.ToText<TemplMatchText>(text);
+        public TemplMatchText ToPicture(TemplGraphic g, int w) => base.ToPicture<TemplMatchText>(g, w);
+        public TemplMatchText ToPictures(TemplGraphic[] g, int w) => base.ToPictures<TemplMatchText>(g, w);
+        public TemplMatchText ToPictures(ICollection<TemplGraphic> g, int w) => base.ToPictures<TemplMatchText>(g, w);
     }
-    public class DocxMatchSection : DocxMatchPara
+    public class TemplMatchSection : TemplMatchPara
     {
         public Section Section;
 
-        public static IEnumerable<DocxMatchSection> Find(DocxRegex rxp, IEnumerable<Section> sections) 
+        public static IEnumerable<TemplMatchSection> Find(TemplRegex rxp, IEnumerable<Section> sections) 
         {
             return sections.SelectMany(sec => Find(rxp, sec));
         }
-        public static IEnumerable<DocxMatchSection> Find(DocxRegex rxp, Section sec) 
+        public static IEnumerable<TemplMatchSection> Find(TemplRegex rxp, Section sec) 
         {
-            return Find<DocxMatchSection>(rxp, sec.SectionParagraphs).Select(m =>
+            return Find<TemplMatchSection>(rxp, sec.SectionParagraphs).Select(m =>
             {
                 m.Section = sec;
                 return m;
@@ -201,41 +200,41 @@ namespace DocXMVC
             Removed = true;
         }
     }
-    public class DocxMatchTable : DocxMatchPara
+    public class TemplMatchTable : TemplMatchPara
     {
         public Table Table;
 
-        public static IEnumerable<DocxMatchTable> Find(DocxRegex rxp, IEnumerable<Table> tables) 
+        public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, IEnumerable<Table> tables) 
         {
             return tables.SelectMany(t => Find(rxp, t));
         }
-        public static IEnumerable<DocxMatchTable> Find(DocxRegex rxp, Table t) 
+        public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, Table t) 
         {
-            return Find<DocxMatchTable>(rxp, t.Rows[0].Cells[0].Paragraphs).Select(m =>
+            return Find<TemplMatchTable>(rxp, t.Rows[0].Cells[0].Paragraphs).Select(m =>
             {
                 m.Table = t;
                 return m;
             });
         }
     }
-    public class DocxMatchRow : DocxMatchTable
+    public class TemplMatchRow : TemplMatchTable
     {
         public Row Row;
         public int RowIndex;
 
-        public static new IEnumerable<DocxMatchRow> Find(DocxRegex rxp, IEnumerable<Table> tables)
+        public static new IEnumerable<TemplMatchRow> Find(TemplRegex rxp, IEnumerable<Table> tables)
         {
             return tables.SelectMany(t => Find(rxp, t));
         }
-        public static new IEnumerable<DocxMatchRow> Find(DocxRegex rxp, Table t)
+        public static new IEnumerable<TemplMatchRow> Find(TemplRegex rxp, Table t)
         {
             return Enumerable.Range(0,t.RowCount).SelectMany(rIdx => Find(rxp, t, rIdx));
         }
 
-        public static IEnumerable<DocxMatchRow> Find(DocxRegex rxp, Table t, int rowIndex)
+        public static IEnumerable<TemplMatchRow> Find(TemplRegex rxp, Table t, int rowIndex)
         {
             var r = t.Rows[rowIndex];
-            return Find<DocxMatchRow>(rxp, r.Cells.SelectMany(c => c.Paragraphs)).Select(m =>
+            return Find<TemplMatchRow>(rxp, r.Cells.SelectMany(c => c.Paragraphs)).Select(m =>
             {
                 m.Table = t;
                 m.Row = r;
@@ -244,30 +243,30 @@ namespace DocXMVC
             });
         }
     }
-    public class DocxMatchCell : DocxMatchRow
+    public class TemplMatchCell : TemplMatchRow
     {
         public Cell Cell;
         public int CellIndex;
 
-        public static new IEnumerable<DocxMatchCell> Find(DocxRegex rxp, IEnumerable<Table> tables)
+        public static new IEnumerable<TemplMatchCell> Find(TemplRegex rxp, IEnumerable<Table> tables)
         {
             return tables.SelectMany(t => Find(rxp, t));
         }
-        public static new IEnumerable<DocxMatchCell> Find(DocxRegex rxp, Table t)
+        public static new IEnumerable<TemplMatchCell> Find(TemplRegex rxp, Table t)
         {
             return Enumerable.Range(0,t.RowCount).SelectMany(rowIdx => Find(rxp, t, rowIdx));
         }
 
-        public static new IEnumerable<DocxMatchCell> Find(DocxRegex rxp, Table t, int rowIdx)
+        public static new IEnumerable<TemplMatchCell> Find(TemplRegex rxp, Table t, int rowIdx)
         {
             return Enumerable.Range(0,t.Rows[rowIdx].Cells.Count).SelectMany(cellIdx => Find(rxp, t, rowIdx, cellIdx));
         }
 
-        public static IEnumerable<DocxMatchCell> Find(DocxRegex rxp, Table t, int rowIdx, int cellIdx)
+        public static IEnumerable<TemplMatchCell> Find(TemplRegex rxp, Table t, int rowIdx, int cellIdx)
         {
             var r = t.Rows[rowIdx];
             var c = r.Cells[cellIdx];
-            return Find<DocxMatchCell>(rxp, c.Paragraphs).Select(m =>
+            return Find<TemplMatchCell>(rxp, c.Paragraphs).Select(m =>
             {
                 m.Table = t;
                 m.Row = r;
@@ -276,37 +275,37 @@ namespace DocXMVC
             });
         }
     }
-    public class DocxMatchPicture : DocxMatchText
+    public class TemplMatchPicture : TemplMatchText
     {
         public Picture Picture;
         public int Width;
 
-        public static new IEnumerable<DocxMatchPicture> Find(DocxRegex rxp, IEnumerable<Paragraph> paragraphs) 
+        public static new IEnumerable<TemplMatchPicture> Find(TemplRegex rxp, IEnumerable<Paragraph> paragraphs) 
         {
             return paragraphs.SelectMany(p => Find(rxp, p));
         }
-        public static new IEnumerable<DocxMatchPicture> Find(DocxRegex rxp, Paragraph p) 
+        public static new IEnumerable<TemplMatchPicture> Find(TemplRegex rxp, Paragraph p) 
         {
             return p.Pictures
                 .Where(     pic => pic.Description != null)
                 .SelectMany(pic => Find(rxp, p, pic));
         }
-        private static IEnumerable<DocxMatchPicture> Find(DocxRegex rxp, Paragraph p, Picture pic) 
+        private static IEnumerable<TemplMatchPicture> Find(TemplRegex rxp, Paragraph p, Picture pic) 
         {
-            return Find<DocxMatchPicture>(rxp, pic.Description).Select(m => {
+            return Find<TemplMatchPicture>(rxp, pic.Description).Select(m => {
                 m.Picture = pic;
                 m.Width = pic.Width;
                 m.Paragraph = p;
                 return m;
             });
         }
-        public new DocxMatchPicture ToText(string text)
+        public new TemplMatchPicture ToText(string text)
         {
             Paragraph.InsertText(0, text, false);
             Expired = true;
             return this;
         }
-        public DocxMatchPicture SetDescription(string text)
+        public TemplMatchPicture SetDescription(string text)
         {
             if (RemovedPlaceholder || Expired || Removed)
             {
@@ -315,7 +314,7 @@ namespace DocXMVC
             Picture.Description = text;
             return this;
         }
-        private void InsertPicture(DocxGraphic graphic, int width)
+        private void InsertPicture(TemplGraphic graphic, int width)
         {
             if (RemovedPlaceholder || Expired || Removed)
             {
@@ -327,33 +326,6 @@ namespace DocXMVC
             RemovePlaceholder();
             Picture = newPic;
         }
-        // The below code is perfectly fine, but we have superseded it with text conversion,
-        //  and converting back to the new image later.
-        // Remove soon, if we don't end up needing it again.
-        /*
-        public DocxMatchPicture ToPicture(DocxGraphic g)
-        {
-            if (Removed || RemovedPlaceholder || Expired)
-            {
-                return this;
-            }
-            InsertPicture(g, Picture.Width);
-            return this;
-        }
-        public DocxMatchPicture ToPictures(DocxGraphic[] g)
-        {
-            var width = Picture.Width;
-            foreach(var graphic in g.Reverse())
-            {
-                InsertPicture(graphic, width);
-            }
-            return this;
-        }
-        public DocxMatchPicture ToPictures(ICollection<DocxGraphic> g)
-        {
-            return ToPictures(g.ToArray());
-        }
-        */
         public override void RemovePlaceholder()
         {
             if (RemovedPlaceholder)

@@ -4,11 +4,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Web;
 
-namespace DocXMVC
+namespace Templ
 {
-    public class DocxModelEntry
+    public class TemplModelEntry
     {
         public object Model;
         public string Path;
@@ -23,7 +22,7 @@ namespace DocXMVC
             {
                 return (T)Value;
             }
-            throw new InvalidCastException($"DocX: Failed casting model entry \"{Path} \" to \" {typeof(T).Name}\"");
+            throw new InvalidCastException($"Templ: Failed casting model entry \"{Path} \" to \" {typeof(T).Name}\"");
         }
         public T[] Attributes<T>() where T : Attribute
         {
@@ -42,7 +41,7 @@ namespace DocXMVC
             }
             catch (Exception)
             {
-                throw new FormatException($"DocX: Failed to convert model property {Path} of type \"{Type}\" to a string");
+                throw new FormatException($"Templ: Failed to convert model property {Path} of type \"{Type}\" to a string");
             }
         }
         public IList<string> ToStringKeys()
@@ -59,14 +58,14 @@ namespace DocXMVC
             {
                 return (Value as Dictionary<object, object>).Keys.Select(k => k.ToString()).ToList();
             }
-            throw new InvalidCastException($"Docx: Failed to retrieve keys from a collection, dict or array at model path \"{Path}\"; its actual type is \"{Type}\"");
+            throw new InvalidCastException($"Templ: Failed to retrieve keys from a collection, dict or array at model path \"{Path}\"; its actual type is \"{Type}\"");
         }
 
-        private DocxModelEntry() { }
-        public static DocxModelEntry Get(object model, string path)
+        private TemplModelEntry() { }
+        public static TemplModelEntry Get(object model, string path)
         {
             var propVal = MemberValue.FindPath(model, path);
-            return new DocxModelEntry()
+            return new TemplModelEntry()
             {
                 Model = model,
                 Path = path,
@@ -103,17 +102,17 @@ namespace DocXMVC
                 // Block use of sub-path as collection index
                 if (SubPathRegex.Match(path).Success)
                 {
-                    throw new NotSupportedException("DocX: Tried to match a model path \"" + path + "\" where the collection key is itself a model path. Only int/string keys supported");
+                    throw new NotSupportedException("Templ: Tried to match a model path \"" + path + "\" where the collection key is itself a model path. Only int/string keys supported");
                 }
                 // Block use of nested collection referencing
                 if (SubIndexRegex.Match(path).Success)
                 {
-                    throw new NotSupportedException("DocX: Tried to match a model path \"" + path + "\" where the collection key is itself a collection element. Only int/string keys supported");
+                    throw new NotSupportedException("Templ: Tried to match a model path \"" + path + "\" where the collection key is itself a collection element. Only int/string keys supported");
                 }
                 // Check for bad use of collection indexing
                 if (BadIndex1Regex.Match(path).Success || BadIndex2Regex.Match(path).Success)
                 {
-                    throw new FormatException("DocX: Tried to match a model path \"" + path + "\" with invalid use of collection indexing [].");
+                    throw new FormatException("Templ: Tried to match a model path \"" + path + "\" with invalid use of collection indexing [].");
                 }
             }
             private static TValue DynamicDict<TKey, TValue>(Dictionary<TKey, TValue> dictionary, TKey key)
@@ -146,7 +145,7 @@ namespace DocXMVC
                 }
                 catch
                 {
-                    throw new FieldAccessException($"DocX: Failed to retrieve property \"{name}\" from model");
+                    throw new FieldAccessException($"Templ: Failed to retrieve property \"{name}\" from model");
                 }
             }
             private static MemberValue FindSingle(MemberValue parentMember, string name)
@@ -184,7 +183,7 @@ namespace DocXMVC
                     // If value is null, either all the try-catches failed or the field truly is null. Either way, no-go.
                     if (value == null)
                     {
-                        throw new FieldAccessException($"DocX: Failed to index into model collection/dict/arr \"{name}\"");
+                        throw new FieldAccessException($"Templ: Failed to index into model collection/dict/arr \"{name}\"");
                     }
                     return new MemberValue(member.Info, value);
                 }

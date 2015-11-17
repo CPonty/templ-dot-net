@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using Novacode;
 
-namespace DocXMVC
+namespace Templ
 {
-    public abstract class DocxModule<T> : DocxModule where T : DocxMatchPara, new()
+    public abstract class TemplModule<T> : TemplModule where T : TemplMatchPara, new()
     {
-        public new Func<T, DocxBuilder, T> CustomHandler = (m, docBuilder) => m;
+        public new Func<T, TemplBuilder, T> CustomHandler = (m, docBuilder) => m;
 
-        public DocxModule(String name, DocxBuilder docBuilder, string[] prefixes)
+        public TemplModule(String name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
 
@@ -42,23 +41,23 @@ namespace DocXMVC
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="rxp"></param>
-        public abstract IEnumerable<T> FindAll(DocxRegex rxp);
+        public abstract IEnumerable<T> FindAll(TemplRegex rxp);
     }
 
-    public abstract class DocxModule
+    public abstract class TemplModule
     {
         public string Name;
-        public DocxBuilder DocBuilder;
-        public DocxRegex[] Regexes;
-        public Func<object, DocxBuilder, object> CustomHandler;
+        public TemplBuilder DocBuilder;
+        public TemplRegex[] Regexes;
+        public Func<object, TemplBuilder, object> CustomHandler;
 
-        public DocxModule(string name, DocxBuilder docBuilder, string[] prefixes)
+        public TemplModule(string name, TemplBuilder docBuilder, string[] prefixes)
         {
             foreach (var prefix in prefixes.Where(s => s.Contains(":")))
             {
-                throw new FormatException($"Docx: Module \"{name}\": prefix \"{prefix}\" cannot contain the split character ':'");
+                throw new FormatException($"Templ: Module \"{name}\": prefix \"{prefix}\" cannot contain the split character ':'");
             }
-            Regexes = prefixes.Select(pre => new DocxRegex(pre)).ToArray();
+            Regexes = prefixes.Select(pre => new TemplRegex(pre)).ToArray();
             DocBuilder = docBuilder;
             Name = name;
         }
@@ -72,15 +71,15 @@ namespace DocXMVC
 
     /*  This is a utility module, instantiated  by others to handle a sub-scope of the document.
         Don't add it to the main Modules collection. If you use the default constructor it won't do anything. */
-    public class DocxSubcollectionModule : DocxModule<DocxMatchText>
+    public class TemplSubcollectionModule : TemplModule<TemplMatchText>
     {
         private string Path = "";
         private IEnumerable<Paragraph> Paragraphs = new List<Paragraph>();
 
-        public DocxSubcollectionModule(string name, DocxBuilder docBuilder, string[] prefixes)
+        public TemplSubcollectionModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
-        public DocxSubcollectionModule(string prefix = "$") : base("Subcollection", null, new string[] { prefix }) { }
+        public TemplSubcollectionModule(string prefix = "$") : base("Subcollection", null, new string[] { prefix }) { }
 
         public void BuildFromScope(IEnumerable<Paragraph> paragraphs, string path)
         {
@@ -91,24 +90,24 @@ namespace DocXMVC
             paragraphs = new List<Paragraph>();
         }
 
-        public override DocxMatchText Handler(DocxMatchText m)
+        public override TemplMatchText Handler(TemplMatchText m)
         {
-            if (m is DocxMatchPicture)
+            if (m is TemplMatchPicture)
             {
-                return (m as DocxMatchPicture).SetDescription(ParentPath(m.Name));
+                return (m as TemplMatchPicture).SetDescription(ParentPath(m.Name));
             }
             return m.ToText(ParentPath(m.Name));
         }
-        public override IEnumerable<DocxMatchText> FindAll(DocxRegex rxp)
+        public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
-            return DocxMatchText.Find(rxp, Paragraphs).Concat(DocxMatchPicture.Find(rxp, Paragraphs).Cast<DocxMatchText>());
+            return TemplMatchText.Find(rxp, Paragraphs).Concat(TemplMatchPicture.Find(rxp, Paragraphs).Cast<TemplMatchText>());
         }
         public string ParentPath(string payload)
         {
             var nameParts = payload.Split(':');
             if (nameParts.Length < 2)
             {
-                throw new FormatException($"Docx: Subcollection placeholder has too few :-separated fields: \"{payload}\"");
+                throw new FormatException($"Templ: Subcollection placeholder has too few :-separated fields: \"{payload}\"");
             }
             nameParts[1] = $"{Path}{(nameParts[1].Length == 0 || Path.Length == 0?"":".")}{nameParts[1]}";
             //TODO remove '|' once it works
@@ -116,12 +115,12 @@ namespace DocXMVC
         }
     }
 
-    public class DocxSectionModule : DocxModule<DocxMatchSection>
+    public class TemplSectionModule : TemplModule<TemplMatchSection>
     {
-        public DocxSectionModule(string name, DocxBuilder docBuilder, string[] prefixes)
+        public TemplSectionModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
-        public override DocxMatchSection Handler(DocxMatchSection m)
+        public override TemplMatchSection Handler(TemplMatchSection m)
         {
             m.RemovePlaceholder();
             var nameParts = m.Name.Split(':');
@@ -134,24 +133,24 @@ namespace DocXMVC
             // 3+ parts: placeholder name is malformed
             if (nameParts.Length > 2)
             {
-                throw new FormatException($"Docx: Section {m.Name} has a malformed tag body (too many occurrences of :)");
+                throw new FormatException($"Templ: Section {m.Name} has a malformed tag body (too many occurrences of :)");
             }
             // 2 parts: second part is a bool expression in the model for 'delete section'
-            m.Expired = DocxModelEntry.Get(DocBuilder.Model, nameParts[1]).AsType<bool>();
+            m.Expired = TemplModelEntry.Get(DocBuilder.Model, nameParts[1]).AsType<bool>();
             return m;
         }
-        public override IEnumerable<DocxMatchSection> FindAll(DocxRegex rxp)
+        public override IEnumerable<TemplMatchSection> FindAll(TemplRegex rxp)
         {
             // "Take 1", a section should only have one naming tag.
-            return DocBuilder.Doc.GetSections().SelectMany(sec => DocxMatchSection.Find(rxp, sec).Take(1));
+            return DocBuilder.Doc.GetSections().SelectMany(sec => TemplMatchSection.Find(rxp, sec).Take(1));
         }
     }
-    public class DocxTableModule : DocxModule<DocxMatchTable>
+    public class TemplTableModule : TemplModule<TemplMatchTable>
     {
-        public DocxTableModule(string name, DocxBuilder docBuilder, string[] prefixes)
+        public TemplTableModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
-        public override DocxMatchTable Handler(DocxMatchTable m)
+        public override TemplMatchTable Handler(TemplMatchTable m)
         {
             m.RemovePlaceholder();
             var nameParts = m.Name.Split(':');
@@ -164,71 +163,70 @@ namespace DocXMVC
             // 3+ parts: placeholder name is malformed
             if (nameParts.Length > 2)
             {
-                throw new FormatException($"Docx: Table \"{m.Name}\" has a malformed tag body (too many occurrences of :)");
+                throw new FormatException($"Templ: Table \"{m.Name}\" has a malformed tag body (too many occurrences of :)");
             }
             // 2 parts: second part is a bool expression in the model for 'delete table'
-            m.Expired = DocxModelEntry.Get(DocBuilder.Model, nameParts[1]).AsType<bool>();
+            m.Expired = TemplModelEntry.Get(DocBuilder.Model, nameParts[1]).AsType<bool>();
             return m;
         }
-        public override IEnumerable<DocxMatchTable> FindAll(DocxRegex rxp)
+        public override IEnumerable<TemplMatchTable> FindAll(TemplRegex rxp)
         {
             // "Take 1", a table should only have one naming tag.
-            return DocBuilder.Doc.Tables.SelectMany(t => DocxMatchTable.Find(rxp, t).Take(1));
+            return DocBuilder.Doc.Tables.SelectMany(t => TemplMatchTable.Find(rxp, t).Take(1));
         }
     }
-    public class DocxRepeatingRowModule : DocxModule<DocxMatchRow>
+    public class TemplRepeatingRowModule : TemplModule<TemplMatchRow>
     {
-        public DocxRepeatingRowModule(string name, DocxBuilder docBuilder, string[] prefixes)
+        public TemplRepeatingRowModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
-        public override DocxMatchRow Handler(DocxMatchRow m)
+        public override TemplMatchRow Handler(TemplMatchRow m)
         {
-            var e = DocxModelEntry.Get(DocBuilder.Model, m.Name);
+            var e = TemplModelEntry.Get(DocBuilder.Model, m.Name);
             var idx = m.RowIndex;
             if (idx < 0)
             {
-                throw new IndexOutOfRangeException($"Docx: Row match does not have an index in a table for match \"{m.Name}\"");
+                throw new IndexOutOfRangeException($"Templ: Row match does not have an index in a table for match \"{m.Name}\"");
             }
             m.RemovePlaceholder();
             foreach (var key in e.ToStringKeys())
             {
                 var r = m.Table.InsertRow(m.Row, ++idx);
-                new DocxSubcollectionModule().BuildFromScope(r.Paragraphs, $"{m.Name}[{key}]");
+                new TemplSubcollectionModule().BuildFromScope(r.Paragraphs, $"{m.Name}[{key}]");
             }
             m.Row.Remove();
             m.Removed = true;
             return m;
         }
-        public override IEnumerable<DocxMatchRow> FindAll(DocxRegex rxp)
+        public override IEnumerable<TemplMatchRow> FindAll(TemplRegex rxp)
         {
             // Takes 1 per row. A row should only have one collection tag.
             return DocBuilder.Doc.Tables.SelectMany(
                 t => Enumerable.Range(0, t.RowCount).SelectMany(
-                    i => DocxMatchRow.Find(rxp, t, i).Take(1)
+                    i => TemplMatchRow.Find(rxp, t, i).Take(1)
                 )
             );
-            //return DocxMatchRow.Find(rxp, DocBuilder.Doc.Tables);
         }
     }
-    public class DocxRepeatingCellModule : DocxModule<DocxMatchCell>
+    public class TemplRepeatingCellModule : TemplModule<TemplMatchCell>
     {
-        public DocxRepeatingCellModule(string name, DocxBuilder docBuilder, string[] prefixes)
+        public TemplRepeatingCellModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
-        public override DocxMatchCell Handler(DocxMatchCell m)
+        public override TemplMatchCell Handler(TemplMatchCell m)
         {
             var width = m.Table.Rows.First().Cells.Count;
-            var keys = DocxModelEntry.Get(DocBuilder.Model, m.Name).ToStringKeys();
+            var keys = TemplModelEntry.Get(DocBuilder.Model, m.Name).ToStringKeys();
             var nrows = keys.Count() / width + 1;
             var rowIdx = m.RowIndex;
             var keyIdx = m.CellIndex;
             if (rowIdx < 0)
             {
-                throw new IndexOutOfRangeException($"Docx: Cell match does not have a row index in a table for match \"{m.Name}\"");
+                throw new IndexOutOfRangeException($"Templ: Cell match does not have a row index in a table for match \"{m.Name}\"");
             }
             if (keyIdx < 0)
             {
-                throw new IndexOutOfRangeException($"Docx: Cell match does not have a cell index in a table for match \"{m.Name}\"");
+                throw new IndexOutOfRangeException($"Templ: Cell match does not have a cell index in a table for match \"{m.Name}\"");
             }
             m.RemovePlaceholder();
             for (int n=0; n< width; n++)
@@ -248,7 +246,7 @@ namespace DocXMVC
                 Cell cell = row.Cells[kIdx % width];
                 if (kIdx < keys.Count())
                 {
-                    new DocxSubcollectionModule().BuildFromScope(cell.Paragraphs, $"{m.Name}[{keys[kIdx]}]");
+                    new TemplSubcollectionModule().BuildFromScope(cell.Paragraphs, $"{m.Name}[{keys[kIdx]}]");
                 }
                 else
                 {
@@ -298,141 +296,140 @@ namespace DocXMVC
             CellClear(dstCell, true);
             srcCell.Paragraphs.ToList().ForEach(p => dstCell.InsertParagraph(p));
         }
-        public override IEnumerable<DocxMatchCell> FindAll(DocxRegex rxp)
+        public override IEnumerable<TemplMatchCell> FindAll(TemplRegex rxp)
         {
             // Takes 1 per row. A row should only have one repeating cell.
             return DocBuilder.Doc.Tables.SelectMany(
                 t => Enumerable.Range(0, t.RowCount).SelectMany(
                     rr => Enumerable.Range(0, t.Rows[rr].Cells.Count).SelectMany(
-                        cc => DocxMatchCell.Find(rxp, t, rr, cc).Take(1)
+                        cc => TemplMatchCell.Find(rxp, t, rr, cc).Take(1)
                     )
                 )
             );
-            //return DocxMatchCell.Find(rxp, DocBuilder.Doc.Tables);
         }
     }
-    public class DocxRepeatingTextModule : DocxModule<DocxMatchText>
+    public class TemplRepeatingTextModule : TemplModule<TemplMatchText>
     {
-        public DocxRepeatingTextModule(string name, DocxBuilder docBuilder, string[] prefixes)
+        public TemplRepeatingTextModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
-        public override DocxMatchText Handler(DocxMatchText m)
+        public override TemplMatchText Handler(TemplMatchText m)
         {
-            var e = DocxModelEntry.Get(DocBuilder.Model, m.Name);
+            var e = TemplModelEntry.Get(DocBuilder.Model, m.Name);
             m.RemovePlaceholder();
             foreach (var key in e.ToStringKeys())
             {
                 var p = m.Paragraph.InsertParagraphAfterSelf(m.Paragraph);
-                new DocxSubcollectionModule().BuildFromScope(new Paragraph[] { p }, $"{m.Name}[{key}]");
+                new TemplSubcollectionModule().BuildFromScope(new Paragraph[] { p }, $"{m.Name}[{key}]");
             }
             m.Paragraph.Remove(false);
             m.Removed = true;
             return m;
         }
-        public override IEnumerable<DocxMatchText> FindAll(DocxRegex rxp)
+        public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
             // Takes 1 per paragraph. A paragraph should only have one repeat entry.
             return DocBuilder.Doc.Paragraphs.SelectMany(
-                p => DocxMatchText.Find(rxp, p).Take(1)
+                p => TemplMatchText.Find(rxp, p).Take(1)
             );
         }
     }
-    public class DocxPictureReplaceModule : DocxModule<DocxMatchPicture>
+    public class TemplPictureReplaceModule : TemplModule<TemplMatchPicture>
     {
-        public DocxPictureReplaceModule(string name, DocxBuilder docBuilder, string[] prefixes)
+        public TemplPictureReplaceModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
-        public override DocxMatchPicture Handler(DocxMatchPicture m)
+        public override TemplMatchPicture Handler(TemplMatchPicture m)
         {
             if (m.Name.Split(':').Length > 1)
             {
-                throw new FormatException($"Docx: Template Picture {m.Name} has a malformed tag body (too many occurrences of :)");
+                throw new FormatException($"Templ: Template Picture {m.Name} has a malformed tag body (too many occurrences of :)");
             }
-            var e = DocxModelEntry.Get(DocBuilder.Model, m.Name);
+            var e = TemplModelEntry.Get(DocBuilder.Model, m.Name);
             var w = m.Picture.Width;
             // Single picture: add text placeholder, expire the placeholder picture
-            if (e.Value is DocxGraphic)
+            if (e.Value is TemplGraphic)
             {
                 return m.ToText($"{{pic:{m.Name}:{w}}}");
             }
             // Multiple pictures: add repeating list placeholder, expire the placeholder picture
-            if (e.Value is DocxGraphic[] || e.Value is ICollection<DocxGraphic>)
+            if (e.Value is TemplGraphic[] || e.Value is ICollection<TemplGraphic>)
             {
                 return m.ToText($"{{li:{m.Name}}}{{$:pic::{w}}}");
             }
-            throw new InvalidCastException($"Docx: Failed to retrieve picture(s) from the model at path \"{e.Path}\"; its actual type is \"{e.Type}\"");
+            throw new InvalidCastException($"Templ: Failed to retrieve picture(s) from the model at path \"{e.Path}\"; its actual type is \"{e.Type}\"");
         }
-        public override IEnumerable<DocxMatchPicture> FindAll(DocxRegex rxp)
+        public override IEnumerable<TemplMatchPicture> FindAll(TemplRegex rxp)
         {
-            return DocxMatchPicture.Find(rxp, DocBuilder.Doc.Paragraphs);
+            return TemplMatchPicture.Find(rxp, DocBuilder.Doc.Paragraphs);
         }
     }
-    public class DocxPicturePlaceholderModule : DocxModule<DocxMatchText>
+    public class TemplPicturePlaceholderModule : TemplModule<TemplMatchText>
     {
-        public DocxPicturePlaceholderModule(string name, DocxBuilder docBuilder, string[] prefixes)
+        public TemplPicturePlaceholderModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
-        public override DocxMatchText Handler(DocxMatchText m)
+        public override TemplMatchText Handler(TemplMatchText m)
         {
             var nameParts = m.Name.Split(':');
             int w = -1;
             // 3+ parts: placeholder name is malformed
             if (nameParts.Length > 2)
             {
-                throw new FormatException($"Docx: Picture {m.Name} has a malformed tag body (too many occurrences of :)");
+                throw new FormatException($"Templ: Picture {m.Name} has a malformed tag body (too many occurrences of :)");
             }
             // 2 parts: second part is an int for the width
             if (nameParts.Length == 2)
             {
                 if (!int.TryParse(nameParts[1], out w))
                 {
-                    throw new FormatException($"Docx: Picture {m.Name} has a non-integer value for width ({nameParts[1]})");
+                    throw new FormatException($"Templ: Picture {m.Name} has a non-integer value for width ({nameParts[1]})");
                 }
             }
-            var e = DocxModelEntry.Get(DocBuilder.Model, nameParts[0]);
+            var e = TemplModelEntry.Get(DocBuilder.Model, nameParts[0]);
             //Try as array, as collection, as single
-            if (e.Value is DocxGraphic)
+            if (e.Value is TemplGraphic)
             {
-                return m.ToPicture((e.Value as DocxGraphic).Load(DocBuilder.Doc), w);
+                return m.ToPicture((e.Value as TemplGraphic).Load(DocBuilder.Doc), w);
             }
-            if (e.Value is DocxGraphic[])
+            if (e.Value is TemplGraphic[])
             {
-                return m.ToPictures((e.Value as DocxGraphic[])
+                return m.ToPictures((e.Value as TemplGraphic[])
                         .Select(g => g.Load(DocBuilder.Doc)).ToArray(), w);
             }
-            if (e.Value is ICollection<DocxGraphic>)
+            if (e.Value is ICollection<TemplGraphic>)
             {
-                return m.ToPictures((e.Value as ICollection<DocxGraphic>)
+                return m.ToPictures((e.Value as ICollection<TemplGraphic>)
                         .Select(g => g.Load(DocBuilder.Doc)).ToList(), w);
             }
-            throw new InvalidCastException($"Docx: Failed to retrieve picture(s) from the model at path \"{e.Path}\"; its actual type is \"{e.Type}\"");
+            throw new InvalidCastException($"Templ: Failed to retrieve picture(s) from the model at path \"{e.Path}\"; its actual type is \"{e.Type}\"");
         }
-        public override IEnumerable<DocxMatchText> FindAll(DocxRegex rxp)
+        public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
-            return DocxMatchText.Find(rxp, DocBuilder.Doc.Paragraphs);
+            return TemplMatchText.Find(rxp, DocBuilder.Doc.Paragraphs);
         }
     }
-    public class DocxTextModule : DocxModule<DocxMatchText>
+    public class TemplTextModule : TemplModule<TemplMatchText>
     {
-        public DocxTextModule(string name, DocxBuilder docBuilder, string[] prefixes)
+        public TemplTextModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
-        public override DocxMatchText Handler(DocxMatchText m)
+        public override TemplMatchText Handler(TemplMatchText m)
         {
-            m.ToText(DocxModelEntry.Get(DocBuilder.Model, m.Name).ToString());
+            m.ToText(TemplModelEntry.Get(DocBuilder.Model, m.Name).ToString());
             return m;
         }
-        public override IEnumerable<DocxMatchText> FindAll(DocxRegex rxp)
+        public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
-            return DocxMatchText.Find(rxp, DocBuilder.Doc.Paragraphs);
+            return TemplMatchText.Find(rxp, DocBuilder.Doc.Paragraphs);
         }
     }
-    public class DocxTOCModule : DocxModule<DocxMatchText>
+    public class TemplTOCModule : TemplModule<TemplMatchText>
     {
         public const TableOfContentsSwitches Switches =
             TableOfContentsSwitches.O | TableOfContentsSwitches.H | TableOfContentsSwitches.Z | TableOfContentsSwitches.U;
 
-        public DocxTOCModule(string name, DocxBuilder docBuilder, string[] prefixes)
+        public TemplTOCModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
 
@@ -441,7 +438,7 @@ namespace DocXMVC
         /// </summary>
         /// <param name="doc"></param>
         /// <returns></returns>
-        public override DocxMatchText Handler(DocxMatchText m)
+        public override TemplMatchText Handler(TemplMatchText m)
         {
             if (m.Removed)
             {
@@ -455,24 +452,24 @@ namespace DocXMVC
             m.RemovePlaceholder();
             return m;
         }
-        public override IEnumerable<DocxMatchText> FindAll(DocxRegex rxp)
+        public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
-            return DocxMatchText.Find(rxp, DocBuilder.Doc.Paragraphs);
+            return TemplMatchText.Find(rxp, DocBuilder.Doc.Paragraphs);
         }
     }
-    public class DocxCommentsModule : DocxModule<DocxMatchText>
+    public class TemplCommentsModule : TemplModule<TemplMatchText>
     {
-        public DocxCommentsModule(string name, DocxBuilder docBuilder, string[] prefixes)
+        public TemplCommentsModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
-        public override DocxMatchText Handler(DocxMatchText m)
+        public override TemplMatchText Handler(TemplMatchText m)
         {
             m.Expired = true;
             return m;
         }
-        public override IEnumerable<DocxMatchText> FindAll(DocxRegex rxp)
+        public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
         {
-            return DocxMatchText.Find(rxp, DocBuilder.Doc.Paragraphs);
+            return TemplMatchText.Find(rxp, DocBuilder.Doc.Paragraphs);
         }
     }
 }
