@@ -9,7 +9,6 @@ namespace Templ
     public class TemplBuilder
     {
         public bool LogEnabled = false;
-        public const string MIMEType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
         public List<TemplModule> Modules = new List<TemplModule>();
         public List<TemplModule> DefaultModules = new List<TemplModule>();
