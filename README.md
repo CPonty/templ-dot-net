@@ -1,6 +1,8 @@
 # ![](https://dl.dropboxusercontent.com/u/39512614/github/templ-dot-net/templ.svg) Templ.NET
 A C# report generation engine, combining .docx templates with strongly-typed data models.
 
+**Templ.NET** is built upon the [DocX library](https://docx.codeplex.com/).
+
 ***
 
 [Install via Nuget](https://www.nuget.org/packages/Templ.NET):
