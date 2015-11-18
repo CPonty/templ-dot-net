@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Novacode;
 
-namespace Templ
+namespace TemplNET
 {
     public class TemplBuilder
     {
@@ -27,8 +27,8 @@ namespace Templ
                 new TemplSectionModule("Section", this, new string[] { "sec" }),
                 new TemplPictureReplaceModule("Picture Replace", this, new string[] { "pic" }),
                 new TemplRepeatingTextModule("Repeating Text", this, new string[] { "li" }),
-                new TemplRepeatingCellModule("Cell", this, new string[] { "cel" }),
-                new TemplRepeatingRowModule("Row", this, new string[] { "row" }),
+                new TemplRepeatingCellModule("Repeating Cell", this, new string[] { "cel" }),
+                new TemplRepeatingRowModule("Repeating Row", this, new string[] { "row" }),
                 new TemplPictureReplaceModule("Picture Replace", this, new string[] { "pic" }),
                 new TemplTableModule("Table", this, new string[] { "tab" }),
                 new TemplPicturePlaceholderModule("Picture Placeholder", this, new string[] { "pic" }),

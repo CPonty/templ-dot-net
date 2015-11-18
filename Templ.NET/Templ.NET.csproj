@@ -7,7 +7,7 @@
     <ProjectGuid>{E49A2C1C-8D8D-4869-AF3A-2CA214CC61A9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Templ</RootNamespace>
+    <RootNamespace>TemplNET</RootNamespace>
     <AssemblyName>Templ</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -31,6 +31,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\Templ.xml</DocumentationFile>
+    <NoWarn>CS1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DocX, Version=1.0.0.19, Culture=neutral, processorArchitecture=MSIL">

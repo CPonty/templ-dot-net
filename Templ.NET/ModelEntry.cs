@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
-namespace Templ
+namespace TemplNET
 {
     public class TemplModelEntry
     {

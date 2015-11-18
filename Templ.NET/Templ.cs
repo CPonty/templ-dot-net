@@ -2,7 +2,7 @@
 using System.Linq;
 using System.IO;
 
-namespace Templ
+namespace TemplNET
 {
     public class Templ
     {

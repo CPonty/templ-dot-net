@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Novacode;
 
-namespace Templ
+namespace TemplNET
 {
     public abstract class TemplModule<T> : TemplModule where T : TemplMatchPara, new()
     {
-        public static uint MinFields;
-        public static uint MaxFields;
+        public uint MinFields = 1;
+        public uint MaxFields = 1;
         public new Func<T, DocX, object, T> CustomHandler = (m, doc, model) => m;
 
         public TemplModule(String name, TemplBuilder docBuilder, string[] prefixes)
@@ -20,11 +20,11 @@ namespace Templ
             var l = m.Fields.Length;
             if (l < MinFields)
             {
-                throw new FormatException($"Templ: Module \"{GetType()}\" found a placeholder \"{m.Placeholder}\" with too few :-separated fields ({l} vs {MinFields})");
+                throw new FormatException($"Templ: Module \"{GetType()}\" found a placeholder \"{m.Placeholder}\" with too few \":\"-separated fields ({l}, minimum is {MinFields})");
             }
             if (l > MaxFields)
             {
-                throw new FormatException($"Templ: Module \"{GetType()}\" found a placeholder \"{m.Placeholder}\" with too many :-separated fields ({l} vs {MaxFields})");
+                throw new FormatException($"Templ: Module \"{GetType()}\" found a placeholder \"{m.Placeholder}\" with too many \":\"-separated fields ({l}; maxmimum is {MaxFields})");
             }
             return m;
         }
@@ -60,7 +60,7 @@ namespace Templ
     public abstract class TemplModule
     {
         public string Name;
-        private TemplBuilder DocBuilder;
+        protected TemplBuilder DocBuilder;
         public DocX Doc => DocBuilder.Doc;
         public object Model => DocBuilder.Model;
         public TemplRegex[] Regexes;
@@ -99,7 +99,11 @@ namespace Templ
             MinFields = 2;
             MaxFields = 99;
         }
-        public TemplSubcollectionModule(string prefix = "$") : base("Subcollection", null, new string[] { prefix }) { }
+        public TemplSubcollectionModule(TemplBuilder docBuilder, string prefix = "$") : base("Subcollection", docBuilder, new string[] { prefix })
+        {
+            MinFields = 2;
+            MaxFields = 99;
+        }
 
         public void BuildFromScope(IEnumerable<Paragraph> paragraphs, string path)
         {
@@ -126,8 +130,9 @@ namespace Templ
         }
         public string ParentPath(TemplMatchText m)
         {
-            m.Fields[1] = $"{Path}{(m.Fields[1].Length == 0 || Path.Length == 0?"":".")}{m.Fields[1]}";
-            return $"{{{m.Fields.Aggregate((a, b) => $"{a}:{b}") }}}";
+            var fields = m.Fields;
+            fields[1] = $"{Path}{(fields[1].Length == 0 || Path.Length == 0?"":".")}{fields[1]}";
+            return $"{{{fields.Aggregate((a, b) => $"{a}:{b}") }}}";
         }
     }
 
@@ -194,7 +199,7 @@ namespace Templ
             foreach (var key in e.ToStringKeys())
             {
                 var r = m.Table.InsertRow(m.Row, ++idx);
-                new TemplSubcollectionModule().BuildFromScope(r.Paragraphs, $"{m.Body}[{key}]");
+                new TemplSubcollectionModule(DocBuilder).BuildFromScope(r.Paragraphs, $"{m.Body}[{key}]");
             }
             m.Row.Remove();
             m.Removed = true;
@@ -242,7 +247,7 @@ namespace Templ
                 Cell cell = row.Cells[keyIdx % width];
                 if (keyIdx < keys.Count())
                 {
-                    new TemplSubcollectionModule().BuildFromScope(cell.Paragraphs, $"{m.Body}[{keys[keyIdx]}]");
+                    new TemplSubcollectionModule(DocBuilder).BuildFromScope(cell.Paragraphs, $"{m.Body}[{keys[keyIdx]}]");
                 }
                 else
                 {
@@ -309,7 +314,7 @@ namespace Templ
             foreach (var key in e.ToStringKeys())
             {
                 var p = m.Paragraph.InsertParagraphAfterSelf(m.Paragraph);
-                new TemplSubcollectionModule().BuildFromScope(new Paragraph[] { p }, $"{m.Body}[{key}]");
+                new TemplSubcollectionModule(DocBuilder).BuildFromScope(new Paragraph[] { p }, $"{m.Body}[{key}]");
             }
             m.Paragraph.Remove(false);
             m.Removed = true;
@@ -349,10 +354,11 @@ namespace Templ
     }
     public class TemplPicturePlaceholderModule : TemplModule<TemplMatchText>
     {
-        public static new uint MaxFields = 2;
         public TemplPicturePlaceholderModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
-        { }
+        {
+            MaxFields = 2;
+        }
         public override TemplMatchText Handler(TemplMatchText m)
         {
             int w = -1;

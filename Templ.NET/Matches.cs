@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Novacode;
 
-namespace Templ
+namespace TemplNET
 {
     public abstract class TemplMatch
     {
