@@ -14,23 +14,23 @@ namespace TemplNET
         private string Path = "";
         private IEnumerable<Paragraph> Paragraphs = new List<Paragraph>();
 
-        public TemplSubcollectionModule(TemplBuilder docBuilder, string name = "Subcollection", string prefix = "$")
-            : base(docBuilder, name, prefix)
+        public TemplSubcollectionModule(string name = "Subcollection", string prefix = "$")
+            : base(name, prefix)
         {
             MinFields = 2;
             MaxFields = 99;
         }
 
-        public void BuildFromScope(IEnumerable<Paragraph> paragraphs, string path)
+        public void BuildFromScope(DocX doc, object model, IEnumerable<Paragraph> paragraphs, string path)
         {
             Path = path;
             Paragraphs = paragraphs;
-            Build();
+            Build(doc, model);
             Path = "";
             paragraphs = new List<Paragraph>();
         }
 
-        public override TemplMatchText Handler(TemplMatchText m)
+        public override TemplMatchText Handler(DocX doc, object model, TemplMatchText m)
         {
             if (m is TemplMatchPicture)
             {
@@ -38,7 +38,7 @@ namespace TemplNET
             }
             return m.ToText(ParentPath(m));
         }
-        public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
+        public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
         {
             // Get both text and picture matches. Contact is possible because MatchText is MatchPicture's base type.
             return TemplMatchText.Find(rxp, Paragraphs).Concat(
@@ -54,85 +54,85 @@ namespace TemplNET
 
     public class TemplSectionModule : TemplModule<TemplMatchSection>
     {
-        public TemplSectionModule(TemplBuilder docBuilder, string name, string prefix)
-            : base(docBuilder, name, prefix)
+        public TemplSectionModule(string name, string prefix)
+            : base(name, prefix)
         {
             MaxFields = 2;
         }
-        public override TemplMatchSection Handler(TemplMatchSection m)
+        public override TemplMatchSection Handler(DocX doc, object model, TemplMatchSection m)
         {
             m.RemovePlaceholder();
             if (m.Fields.Length==2)
             {
                 // 2 parts: second part is a bool expression in the model for 'delete section'
-                m.Expired = TemplModelEntry.Get(Model, m.Fields[1]).AsType<bool>();
+                m.Expired = TemplModelEntry.Get(model, m.Fields[1]).AsType<bool>();
             }
             return m;
         }
-        public override IEnumerable<TemplMatchSection> FindAll(TemplRegex rxp)
+        public override IEnumerable<TemplMatchSection> FindAll(DocX doc, TemplRegex rxp)
         {
             // Expecting only 1 match per section
-            return TemplMatchSection.Find(rxp, Doc.GetSections(), 1);
+            return TemplMatchSection.Find(rxp, doc.GetSections(), 1);
         }
     }
     public class TemplTableModule : TemplModule<TemplMatchTable>
     {
-        public TemplTableModule(TemplBuilder docBuilder, string name, string prefix)
-            : base(docBuilder, name, prefix)
+        public TemplTableModule(string name, string prefix)
+            : base(name, prefix)
         {
             MaxFields = 2;
         }
-        public override TemplMatchTable Handler(TemplMatchTable m)
+        public override TemplMatchTable Handler(DocX doc, object model, TemplMatchTable m)
         {
             m.RemovePlaceholder();
             if (m.Fields.Length==2)
             {
                 // 2 parts: second part is a bool expression in the model for 'delete table'
-                m.Expired = TemplModelEntry.Get(Model, m.Fields[1]).AsType<bool>();
+                m.Expired = TemplModelEntry.Get(model, m.Fields[1]).AsType<bool>();
             }
             return m;
         }
-        public override IEnumerable<TemplMatchTable> FindAll(TemplRegex rxp)
+        public override IEnumerable<TemplMatchTable> FindAll(DocX doc, TemplRegex rxp)
         {
             // Expecting only 1 match per table
-            return TemplMatchTable.Find(rxp, Doc.Tables, maxPerTable:1);
+            return TemplMatchTable.Find(rxp, doc.Tables, maxPerTable:1);
         }
     }
     public class TemplRepeatingRowModule : TemplModule<TemplMatchTable>
     {
-        public TemplRepeatingRowModule(TemplBuilder docBuilder, string name, string prefix)
-            : base(docBuilder, name, prefix)
+        public TemplRepeatingRowModule(string name, string prefix)
+            : base(name, prefix)
         { }
-        public override TemplMatchTable Handler(TemplMatchTable m)
+        public override TemplMatchTable Handler(DocX doc, object model, TemplMatchTable m)
         {
-            var e = TemplModelEntry.Get(Model, m.Body);
+            var e = TemplModelEntry.Get(model, m.Body);
             m.Validate();
             var idx = m.RowIndex;
             m.RemovePlaceholder();
             foreach (var key in e.ToStringKeys())
             {
                 var r = m.Table.InsertRow(m.Row, ++idx);
-                new TemplSubcollectionModule(DocBuilder).BuildFromScope(r.Paragraphs, $"{m.Body}[{key}]");
+                new TemplSubcollectionModule().BuildFromScope(doc, model, r.Paragraphs, $"{m.Body}[{key}]");
             }
             m.Row.Remove();
             m.Removed = true;
             return m;
         }
-        public override IEnumerable<TemplMatchTable> FindAll(TemplRegex rxp)
+        public override IEnumerable<TemplMatchTable> FindAll(DocX doc, TemplRegex rxp)
         {
             // Expecting only 1 match per row
-            return TemplMatchTable.Find(rxp, Doc.Tables, maxPerRow:1).Reverse();
+            return TemplMatchTable.Find(rxp, doc.Tables, maxPerRow:1).Reverse();
         }
     }
     public class TemplRepeatingCellModule : TemplModule<TemplMatchTable>
     {
-        public TemplRepeatingCellModule(TemplBuilder docBuilder, string name, string prefix)
-            : base(docBuilder, name, prefix)
+        public TemplRepeatingCellModule(string name, string prefix)
+            : base(name, prefix)
         { }
-        public override TemplMatchTable Handler(TemplMatchTable m)
+        public override TemplMatchTable Handler(DocX doc, object model, TemplMatchTable m)
         {
             var width = m.Table.Rows.First().Cells.Count;
-            var keys = TemplModelEntry.Get(Model, m.Body).ToStringKeys();
+            var keys = TemplModelEntry.Get(model, m.Body).ToStringKeys();
             var nrows = keys.Count() / width + 1;
             m.Validate();
             m.RemovePlaceholder();
@@ -153,7 +153,7 @@ namespace TemplNET
                 Cell cell = row.Cells[keyIdx % width];
                 if (keyIdx < keys.Count())
                 {
-                    new TemplSubcollectionModule(DocBuilder).BuildFromScope(cell.Paragraphs, $"{m.Body}[{keys[keyIdx]}]");
+                    new TemplSubcollectionModule().BuildFromScope(doc, model, cell.Paragraphs, $"{m.Body}[{keys[keyIdx]}]");
                 }
                 else
                 {
@@ -202,44 +202,44 @@ namespace TemplNET
             CellClear(dstCell, true);
             srcCell.Paragraphs.ToList().ForEach(p => dstCell.InsertParagraph(p));
         }
-        public override IEnumerable<TemplMatchTable> FindAll(TemplRegex rxp)
+        public override IEnumerable<TemplMatchTable> FindAll(DocX doc, TemplRegex rxp)
         {
             // Expecting only 1 match per row (yes really, per row)
-            return TemplMatchTable.Find(rxp, Doc.Tables, maxPerRow:1).Reverse();
+            return TemplMatchTable.Find(rxp, doc.Tables, maxPerRow:1).Reverse();
         }
     }
     public class TemplRepeatingTextModule : TemplModule<TemplMatchText>
     {
-        public TemplRepeatingTextModule(TemplBuilder docBuilder, string name, string prefix)
-            : base(docBuilder, name, prefix)
+        public TemplRepeatingTextModule(string name, string prefix)
+            : base(name, prefix)
         { }
-        public override TemplMatchText Handler(TemplMatchText m)
+        public override TemplMatchText Handler(DocX doc, object model, TemplMatchText m)
         {
-            var e = TemplModelEntry.Get(Model, m.Body);
+            var e = TemplModelEntry.Get(model, m.Body);
             m.RemovePlaceholder();
             foreach (var key in e.ToStringKeys())
             {
                 var p = m.Paragraph.InsertParagraphAfterSelf(m.Paragraph);
-                new TemplSubcollectionModule(DocBuilder).BuildFromScope(new Paragraph[] { p }, $"{m.Body}[{key}]");
+                new TemplSubcollectionModule().BuildFromScope(doc, model, new Paragraph[] { p }, $"{m.Body}[{key}]");
             }
             m.Paragraph.Remove(false);
             m.Removed = true;
             return m;
         }
-        public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
+        public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
         {
             // Expecting only 1 match per paragraph
-            return TemplMatchText.Find(rxp, Doc.Paragraphs, 1);
+            return TemplMatchText.Find(rxp, doc.Paragraphs, 1);
         }
     }
     public class TemplPictureReplaceModule : TemplModule<TemplMatchPicture>
     {
-        public TemplPictureReplaceModule(TemplBuilder docBuilder, string name, string prefix)
-            : base(docBuilder, name, prefix)
+        public TemplPictureReplaceModule(string name, string prefix)
+            : base(name, prefix)
         { }
-        public override TemplMatchPicture Handler(TemplMatchPicture m)
+        public override TemplMatchPicture Handler(DocX doc, object model, TemplMatchPicture m)
         {
-            var e = TemplModelEntry.Get(Model, m.Body);
+            var e = TemplModelEntry.Get(model, m.Body);
             var w = m.Picture.Width;
             // Single picture: add text placeholder, expire the placeholder picture
             if (e.Value is TemplGraphic)
@@ -253,19 +253,19 @@ namespace TemplNET
             }
             throw new InvalidCastException($"Templ: Failed to retrieve picture(s) from the model at path \"{e.Path}\"; its actual type is \"{e.Type}\"");
         }
-        public override IEnumerable<TemplMatchPicture> FindAll(TemplRegex rxp)
+        public override IEnumerable<TemplMatchPicture> FindAll(DocX doc, TemplRegex rxp)
         {
-            return TemplMatchPicture.Find(rxp, Doc.Paragraphs);
+            return TemplMatchPicture.Find(rxp, doc.Paragraphs);
         }
     }
     public class TemplPicturePlaceholderModule : TemplModule<TemplMatchText>
     {
-        public TemplPicturePlaceholderModule(TemplBuilder docBuilder, string name, string prefix)
-            : base(docBuilder, name, prefix)
+        public TemplPicturePlaceholderModule(string name, string prefix)
+            : base(name, prefix)
         {
             MaxFields = 2;
         }
-        public override TemplMatchText Handler(TemplMatchText m)
+        public override TemplMatchText Handler(DocX doc, object model, TemplMatchText m)
         {
             int w = -1;
             if (m.Fields.Length==2)
@@ -276,42 +276,42 @@ namespace TemplNET
                     throw new FormatException($"Templ: Picture {m.Body} has a non-integer value for width ({m.Fields[1]})");
                 }
             }
-            var e = TemplModelEntry.Get(Model, m.Fields[0]);
+            var e = TemplModelEntry.Get(model, m.Fields[0]);
             //Try as array, as collection, as single
             if (e.Value is TemplGraphic)
             {
-                return m.ToPicture((e.Value as TemplGraphic).Load(Doc), w);
+                return m.ToPicture((e.Value as TemplGraphic).Load(doc), w);
             }
             if (e.Value is TemplGraphic[])
             {
                 return m.ToPictures((e.Value as TemplGraphic[])
-                        .Select(g => g.Load(Doc)).ToArray(), w);
+                        .Select(g => g.Load(doc)).ToArray(), w);
             }
             if (e.Value is ICollection<TemplGraphic>)
             {
                 return m.ToPictures((e.Value as ICollection<TemplGraphic>)
-                        .Select(g => g.Load(Doc)).ToList(), w);
+                        .Select(g => g.Load(doc)).ToList(), w);
             }
             throw new InvalidCastException($"Templ: Failed to retrieve picture(s) from the model at path \"{e.Path}\"; its actual type is \"{e.Type}\"");
         }
-        public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
+        public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
         {
-            return TemplMatchText.Find(rxp, Doc.Paragraphs);
+            return TemplMatchText.Find(rxp, doc.Paragraphs);
         }
     }
     public class TemplTextModule : TemplModule<TemplMatchText>
     {
-        public TemplTextModule(TemplBuilder docBuilder, string name, string prefix)
-            : base(docBuilder, name, prefix)
+        public TemplTextModule(string name, string prefix)
+            : base(name, prefix)
         { }
-        public override TemplMatchText Handler(TemplMatchText m)
+        public override TemplMatchText Handler(DocX doc, object model, TemplMatchText m)
         {
-            m.ToText(TemplModelEntry.Get(Model, m.Body).ToString());
+            m.ToText(TemplModelEntry.Get(model, m.Body).ToString());
             return m;
         }
-        public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
+        public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
         {
-            return TemplMatchText.Find(rxp, Doc.Paragraphs);
+            return TemplMatchText.Find(rxp, doc.Paragraphs);
         }
     }
     public class TemplTOCModule : TemplModule<TemplMatchText>
@@ -319,22 +319,24 @@ namespace TemplNET
         public const TableOfContentsSwitches Switches =
             TableOfContentsSwitches.O | TableOfContentsSwitches.H | TableOfContentsSwitches.Z | TableOfContentsSwitches.U;
 
-        public TemplTOCModule(TemplBuilder docBuilder, string name, string prefix)
-            : base(docBuilder, name, prefix)
+        public TemplTOCModule(string name, string prefix)
+            : base(name, prefix)
         { }
 
         /// <summary>
         /// Requires user to open in Word and click "Update table of contents". We cannot auto-populate it here.
         /// </summary>
         /// <param name="m"></param>
+        /// <param name="doc"></param>
+        /// <param name="model"></param>
         /// <returns></returns>
-        public override TemplMatchText Handler(TemplMatchText m)
+        public override TemplMatchText Handler(DocX doc, object model, TemplMatchText m)
         {
             if (m.Removed)
             {
                 return m;
             }
-            Doc.InsertTableOfContents(m.Paragraph, m.Body, Switches);
+            doc.InsertTableOfContents(m.Paragraph, m.Body, Switches);
             /* Additional options:
                 string headerStyle = null
                 int maxIncludeLevel = 3
@@ -342,24 +344,24 @@ namespace TemplNET
             m.RemovePlaceholder();
             return m;
         }
-        public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
+        public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
         {
-            return TemplMatchText.Find(rxp, Doc.Paragraphs);
+            return TemplMatchText.Find(rxp, doc.Paragraphs);
         }
     }
     public class TemplCommentsModule : TemplModule<TemplMatchText>
     {
-        public TemplCommentsModule(TemplBuilder docBuilder, string name, string prefix)
-            : base(docBuilder, name, prefix)
+        public TemplCommentsModule(string name, string prefix)
+            : base(name, prefix)
         { }
-        public override TemplMatchText Handler(TemplMatchText m)
+        public override TemplMatchText Handler(DocX doc, object model, TemplMatchText m)
         {
             m.Expired = true;
             return m;
         }
-        public override IEnumerable<TemplMatchText> FindAll(TemplRegex rxp)
+        public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
         {
-            return TemplMatchText.Find(rxp, Doc.Paragraphs);
+            return TemplMatchText.Find(rxp, doc.Paragraphs);
         }
     }
 }
