@@ -72,13 +72,13 @@ namespace TemplNET
         /// <param name="defaultModules"></param>
         public TemplBuilder(string filename, bool defaultModules = true) : this(defaultModules)
         {
+            Filename = filename;
             Doc = DocX.Load(filename);
             Doc.SaveAs(Stream);
-            Filename = filename;
         }
 
         /// <summary>
-        /// Initialise from byte array
+        /// Start with file data
         /// </summary>
         /// <param name="data"></param>
         /// <param name="defaultModules"></param>
@@ -96,49 +96,26 @@ namespace TemplNET
         {
             Stream = new MemoryStream();
             Doc.SaveAs(Stream);
-
-            if (Debug)
-            {
-                //this.SaveAs(DebugOutPath);
-            }
         }
 
         /// <summary>
-        /// (debug) save to disk
+        /// save to disk
         /// </summary>
         /// <param name="fileName"></param>
         public void SaveAs(string fileName)
         {
-            Doc.SaveAs(fileName);
             Filename = fileName;
+            Doc.SaveAs(fileName);
         }
 
         /// <summary>
-        /// (debug) write a message to the end of the document
+        /// Create document from template, model
         /// </summary>
-        /// <param name="s"></param>
-        public void Logp(string s)
-        {
-            if (Debug)
-            {
-                //Doc.InsertParagraph(s);
-            }
-        }
-
-        /// <summary>
-        /// Main document-building trigger. Generates metadata, runs user-specified DoBuild(), saves document.
-        /// </summary>
-        /// <returns></returns>
-        public void Build()
-        {
-            Modules.ForEach(mod => mod.Build());
-            Save();
-        }
-
         public void Build(object model)
         {
-            this.Model = model;
-            Build();
+            Model = model;
+            Modules.ForEach(mod => mod.Build());
+            Save();
         }
 
     }
