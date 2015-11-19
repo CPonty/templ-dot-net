@@ -53,7 +53,7 @@ namespace TemplNET
         {
             var fields = m.Fields;
             fields[1] = $"{Path}{(fields[1].Length == 0 || Path.Length == 0?"":".")}{fields[1]}";
-            return $"{{{fields.Aggregate((a, b) => $"{a}:{b}") }}}";
+            return $"{TemplConfig.MatchOpen}{fields.Aggregate((a, b) => $"{a}:{b}") }{TemplConfig.MatchClose}";
         }
     }
 
@@ -259,12 +259,12 @@ namespace TemplNET
             // Single picture: add text placeholder, expire the placeholder picture
             if (e.Value is TemplGraphic)
             {
-                return m.ToText($"{{pic:{m.Body}:{w}}}");
+                return m.ToText($"{TemplConfig.MatchOpen}pic{TemplConfig.FieldSep}{m.Body}{TemplConfig.FieldSep}{w}{TemplConfig.MatchClose}");
             }
             // Multiple pictures: add repeating list placeholder, expire the placeholder picture
             if (e.Value is TemplGraphic[] || e.Value is ICollection<TemplGraphic>)
             {
-                return m.ToText($"{{li:{m.Body}}}{{$:pic::{w}}}");
+                return m.ToText($"{TemplConfig.MatchOpen}li{TemplConfig.FieldSep}{m.Body}{TemplConfig.MatchClose}{TemplConfig.MatchOpen}${TemplConfig.FieldSep}pic{TemplConfig.FieldSep}{TemplConfig.FieldSep}{w}{TemplConfig.MatchClose}");
             }
             throw new InvalidCastException($"Templ: Failed to retrieve picture(s) from the model at path \"{e.Path}\"; its actual type is \"{e.Type}\"");
         }

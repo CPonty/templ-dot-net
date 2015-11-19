@@ -20,11 +20,11 @@ namespace TemplNET
             var l = m.Fields.Length;
             if (l < MinFields)
             {
-                throw new FormatException($"Templ: Module \"{GetType()}\" found a placeholder \"{m.Placeholder}\" with too few \":\"-separated fields ({l}, minimum is {MinFields})");
+                throw new FormatException($"Templ: Module \"{GetType()}\" found a placeholder \"{m.Placeholder}\" with too few \"{TemplConfig.FieldSep}\"-separated fields ({l}, minimum is {MinFields})");
             }
             if (l > MaxFields)
             {
-                throw new FormatException($"Templ: Module \"{GetType()}\" found a placeholder \"{m.Placeholder}\" with too many \":\"-separated fields ({l}; maxmimum is {MaxFields})");
+                throw new FormatException($"Templ: Module \"{GetType()}\" found a placeholder \"{m.Placeholder}\" with too many \"{TemplConfig.FieldSep}\"-separated fields ({l}; maxmimum is {MaxFields})");
             }
             return m;
         }
@@ -68,9 +68,9 @@ namespace TemplNET
 
         public TemplModule(string name, TemplBuilder docBuilder, string[] prefixes)
         {
-            foreach (var prefix in prefixes.Where(s => s.Contains(":")))
+            foreach (var prefix in prefixes.Where(s => s.Contains(TemplConfig.FieldSep)))
             {
-                throw new FormatException($"Templ: Module \"{name}\": prefix \"{prefix}\" cannot contain the split character ':'");
+                throw new FormatException($"Templ: Module \"{name}\": prefix \"{prefix}\" cannot contain the field separator '{TemplConfig.FieldSep}'");
             }
             Regexes = prefixes.Select(pre => new TemplRegex(pre)).ToArray();
             DocBuilder = docBuilder;

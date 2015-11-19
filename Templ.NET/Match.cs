@@ -13,7 +13,7 @@ namespace TemplNET
         public bool Removed = false;
         protected bool RemovedPlaceholder = false;
         public string Body;
-        public string[] Fields => Body.Split(':');
+        public string[] Fields => Body.Split(TemplConfig.FieldSep);
         public TemplRegex Regex;
         public string Placeholder => Regex.Text(Body);
         public Regex Pattern => Regex.Pattern;

@@ -8,8 +8,6 @@ namespace TemplNET
 {
     public class TemplBuilder
     {
-        public bool LogEnabled = false;
-
         public List<TemplModule> Modules = new List<TemplModule>();
         public List<TemplModule> DefaultModules = new List<TemplModule>();
 
@@ -97,7 +95,7 @@ namespace TemplNET
             Stream = new MemoryStream();
             Doc.SaveAs(Stream);
 
-            if (LogEnabled)
+            if (TemplConfig.Debug)
             {
                 //this.SaveAs(DebugOutPath);
             }
@@ -119,9 +117,9 @@ namespace TemplNET
         /// <param name="s"></param>
         public void Logp(string s)
         {
-            if (LogEnabled)
+            if (TemplConfig.Debug)
             {
-                Doc.InsertParagraph(s);
+                //Doc.InsertParagraph(s);
             }
         }
 
