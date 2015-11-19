@@ -11,10 +11,19 @@ namespace TemplNET
         public uint MaxFields = 1;
         public new Func<T, DocX, object, T> CustomHandler = (m, doc, model) => m;
 
-        public TemplModule(String name, TemplBuilder docBuilder, string[] prefixes)
-            : base(name, docBuilder, prefixes)
+        public TemplModule(TemplBuilder docBuilder, string name, string prefix)
+            : base(docBuilder, name, prefix)
         { }
 
+        /// <summary>
+        /// Add more placeholder prefixes to match against.
+        /// </summary>
+        /// <param name="prefixes"></param>
+        public TemplModule<T> WithPrefixes(IEnumerable<string> prefixes)
+        {
+            prefixes.ToList().ForEach(s => AddPrefix(s));
+            return this;
+        }
         private T CheckFieldCount(T m)
         {
             var l = m.Fields.Length;
@@ -63,18 +72,24 @@ namespace TemplNET
         protected TemplBuilder DocBuilder;
         public DocX Doc => DocBuilder.Doc;
         public object Model => DocBuilder.Model;
-        public TemplRegex[] Regexes;
+        public ISet<TemplRegex> Regexes = new HashSet<TemplRegex>();
         public Func<object, TemplBuilder, object> CustomHandler;
 
-        public TemplModule(string name, TemplBuilder docBuilder, string[] prefixes)
+        public TemplModule(TemplBuilder docBuilder, string name, string prefix)
         {
-            foreach (var prefix in prefixes.Where(s => s.Contains(TemplConst.FieldSep)))
-            {
-                throw new FormatException($"Templ: Module \"{name}\": prefix \"{prefix}\" cannot contain the field separator '{TemplConst.FieldSep}'");
-            }
-            Regexes = prefixes.Select(pre => new TemplRegex(pre)).ToArray();
+            AddPrefix(prefix);
             DocBuilder = docBuilder;
             Name = name;
+        }
+
+        protected TemplModule AddPrefix(string prefix)
+        {
+            if (prefix.Contains(TemplConst.FieldSep))
+            {
+                throw new FormatException($"Templ: Module \"{Name}\": prefix \"{prefix}\" cannot contain the field separator '{TemplConst.FieldSep}'");
+            }
+            Regexes.Add(new TemplRegex(prefix));
+            return this;
         }
 
         public abstract void Build();

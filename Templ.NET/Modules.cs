@@ -14,13 +14,8 @@ namespace TemplNET
         private string Path = "";
         private IEnumerable<Paragraph> Paragraphs = new List<Paragraph>();
 
-        public TemplSubcollectionModule(string name, TemplBuilder docBuilder, string[] prefixes)
-            : base(name, docBuilder, prefixes)
-        {
-            MinFields = 2;
-            MaxFields = 99;
-        }
-        public TemplSubcollectionModule(TemplBuilder docBuilder, string prefix = "$") : base("Subcollection", docBuilder, new string[] { prefix })
+        public TemplSubcollectionModule(TemplBuilder docBuilder, string name = "Subcollection", string prefix = "$")
+            : base(docBuilder, name, prefix)
         {
             MinFields = 2;
             MaxFields = 99;
@@ -59,8 +54,8 @@ namespace TemplNET
 
     public class TemplSectionModule : TemplModule<TemplMatchSection>
     {
-        public TemplSectionModule(string name, TemplBuilder docBuilder, string[] prefixes)
-            : base(name, docBuilder, prefixes)
+        public TemplSectionModule(TemplBuilder docBuilder, string name, string prefix)
+            : base(docBuilder, name, prefix)
         {
             MaxFields = 2;
         }
@@ -82,8 +77,8 @@ namespace TemplNET
     }
     public class TemplTableModule : TemplModule<TemplMatchTable>
     {
-        public TemplTableModule(string name, TemplBuilder docBuilder, string[] prefixes)
-            : base(name, docBuilder, prefixes)
+        public TemplTableModule(TemplBuilder docBuilder, string name, string prefix)
+            : base(docBuilder, name, prefix)
         {
             MaxFields = 2;
         }
@@ -105,8 +100,8 @@ namespace TemplNET
     }
     public class TemplRepeatingRowModule : TemplModule<TemplMatchTable>
     {
-        public TemplRepeatingRowModule(string name, TemplBuilder docBuilder, string[] prefixes)
-            : base(name, docBuilder, prefixes)
+        public TemplRepeatingRowModule(TemplBuilder docBuilder, string name, string prefix)
+            : base(docBuilder, name, prefix)
         { }
         public override TemplMatchTable Handler(TemplMatchTable m)
         {
@@ -131,8 +126,8 @@ namespace TemplNET
     }
     public class TemplRepeatingCellModule : TemplModule<TemplMatchTable>
     {
-        public TemplRepeatingCellModule(string name, TemplBuilder docBuilder, string[] prefixes)
-            : base(name, docBuilder, prefixes)
+        public TemplRepeatingCellModule(TemplBuilder docBuilder, string name, string prefix)
+            : base(docBuilder, name, prefix)
         { }
         public override TemplMatchTable Handler(TemplMatchTable m)
         {
@@ -215,8 +210,8 @@ namespace TemplNET
     }
     public class TemplRepeatingTextModule : TemplModule<TemplMatchText>
     {
-        public TemplRepeatingTextModule(string name, TemplBuilder docBuilder, string[] prefixes)
-            : base(name, docBuilder, prefixes)
+        public TemplRepeatingTextModule(TemplBuilder docBuilder, string name, string prefix)
+            : base(docBuilder, name, prefix)
         { }
         public override TemplMatchText Handler(TemplMatchText m)
         {
@@ -239,8 +234,8 @@ namespace TemplNET
     }
     public class TemplPictureReplaceModule : TemplModule<TemplMatchPicture>
     {
-        public TemplPictureReplaceModule(string name, TemplBuilder docBuilder, string[] prefixes)
-            : base(name, docBuilder, prefixes)
+        public TemplPictureReplaceModule(TemplBuilder docBuilder, string name, string prefix)
+            : base(docBuilder, name, prefix)
         { }
         public override TemplMatchPicture Handler(TemplMatchPicture m)
         {
@@ -265,8 +260,8 @@ namespace TemplNET
     }
     public class TemplPicturePlaceholderModule : TemplModule<TemplMatchText>
     {
-        public TemplPicturePlaceholderModule(string name, TemplBuilder docBuilder, string[] prefixes)
-            : base(name, docBuilder, prefixes)
+        public TemplPicturePlaceholderModule(TemplBuilder docBuilder, string name, string prefix)
+            : base(docBuilder, name, prefix)
         {
             MaxFields = 2;
         }
@@ -306,8 +301,8 @@ namespace TemplNET
     }
     public class TemplTextModule : TemplModule<TemplMatchText>
     {
-        public TemplTextModule(string name, TemplBuilder docBuilder, string[] prefixes)
-            : base(name, docBuilder, prefixes)
+        public TemplTextModule(TemplBuilder docBuilder, string name, string prefix)
+            : base(docBuilder, name, prefix)
         { }
         public override TemplMatchText Handler(TemplMatchText m)
         {
@@ -324,8 +319,8 @@ namespace TemplNET
         public const TableOfContentsSwitches Switches =
             TableOfContentsSwitches.O | TableOfContentsSwitches.H | TableOfContentsSwitches.Z | TableOfContentsSwitches.U;
 
-        public TemplTOCModule(string name, TemplBuilder docBuilder, string[] prefixes)
-            : base(name, docBuilder, prefixes)
+        public TemplTOCModule(TemplBuilder docBuilder, string name, string prefix)
+            : base(docBuilder, name, prefix)
         { }
 
         /// <summary>
@@ -354,8 +349,8 @@ namespace TemplNET
     }
     public class TemplCommentsModule : TemplModule<TemplMatchText>
     {
-        public TemplCommentsModule(string name, TemplBuilder docBuilder, string[] prefixes)
-            : base(name, docBuilder, prefixes)
+        public TemplCommentsModule(TemplBuilder docBuilder, string name, string prefix)
+            : base(docBuilder, name, prefix)
         { }
         public override TemplMatchText Handler(TemplMatchText m)
         {
