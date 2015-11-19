@@ -81,7 +81,6 @@ namespace TemplNET
             public static readonly Regex BadIndex2Regex = new Regex(@"\.\[");
             public static readonly Regex IndexRegex = new Regex(@"([^\[]+)\[([^\]]+)\]");
 
-
             public MemberInfo Info;
             public object Value;
 
@@ -102,17 +101,17 @@ namespace TemplNET
                 // Block use of sub-path as collection index
                 if (SubPathRegex.Match(path).Success)
                 {
-                    throw new NotSupportedException("Templ: Tried to match a model path \"" + path + "\" where the collection key is itself a model path. Only int/string keys supported");
+                    throw new NotSupportedException($"Templ: Tried to match a model path \"{path}\" where the collection key is itself a model path. Only int/string keys supported");
                 }
                 // Block use of nested collection referencing
                 if (SubIndexRegex.Match(path).Success)
                 {
-                    throw new NotSupportedException("Templ: Tried to match a model path \"" + path + "\" where the collection key is itself a collection element. Only int/string keys supported");
+                    throw new NotSupportedException($"Templ: Tried to match a model path \"{path}\" where the collection key is itself a collection element. Only int/string keys supported");
                 }
                 // Check for bad use of collection indexing
                 if (BadIndex1Regex.Match(path).Success || BadIndex2Regex.Match(path).Success)
                 {
-                    throw new FormatException("Templ: Tried to match a model path \"" + path + "\" with invalid use of collection indexing [].");
+                    throw new FormatException($"Templ: Tried to match a model path \"{path}\" with invalid use of collection indexing [].");
                 }
             }
             private static TValue DynamicDict<TKey, TValue>(Dictionary<TKey, TValue> dictionary, TKey key)

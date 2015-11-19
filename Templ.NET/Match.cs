@@ -135,7 +135,7 @@ namespace TemplNET
             {
                 return;
             }
-            Paragraph.ReplaceText(Placeholder, string.Empty);
+            Paragraph?.ReplaceText(Placeholder, string.Empty);
             RemovedPlaceholder = true;
         }
 

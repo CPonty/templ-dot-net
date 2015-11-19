@@ -48,23 +48,22 @@ namespace TemplNET
         }
         public override void Remove()
         {
-            RemovePlaceholder();
+            base.Remove();
             foreach (Paragraph p in Section.SectionParagraphs.Skip(1))
             {
                 p.Pictures.ForEach(pic => pic.Remove());
                 p.FollowingTable?.Remove();
                 p.Remove(false);
             }
-            Removed = true;
         }
     }
     public class TemplMatchTable : TemplMatchPara
     {
         public Table Table;
-        public Row Row;
-        public int RowIndex;
-        public Cell Cell;
-        public int CellIndex;
+        public Row Row => ((RowIndex>=0 && RowIndex<Table?.RowCount) ? Table?.Rows[RowIndex] : null);
+        public int RowIndex = -1;
+        public Cell Cell => ((CellIndex>=0 && CellIndex<Row?.Cells?.Count) ? Row?.Cells[CellIndex] : null);
+        public int CellIndex = -1;
 
         public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, IEnumerable<Table> tables, 
             uint maxPerTable = TemplConfig.MaxMatchesPerScope,
@@ -89,17 +88,37 @@ namespace TemplNET
         public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, Table t, int rowIdx, int cellIdx,
             uint maxPerCell = TemplConfig.MaxMatchesPerScope)
         {
-            var r = t.Rows[rowIdx];
-            var c = r.Cells[cellIdx];
-            return Find<TemplMatchTable>(rxp, c.Paragraphs).Select(m =>
+            return Find<TemplMatchTable>(rxp, t.Rows[rowIdx].Cells[cellIdx].Paragraphs).Select(m =>
             {
                 m.Table = t;
-                m.Row = r;
-                m.Cell = c;
                 m.RowIndex = rowIdx;
                 m.CellIndex = cellIdx;
                 return m;
             }).Take((int)maxPerCell);
+        }
+        public override void Remove()
+        {
+            base.Remove();
+            Table?.Remove();
+        }
+        public void Validate()
+        {
+            if (RowIndex < 0 || RowIndex > Table.RowCount)
+            {
+                throw new IndexOutOfRangeException($"Templ: Table match \"{Placeholder}\", row index out of bounds ({RowIndex}, Table has {Table.RowCount})");
+            }
+            if (Table==null)
+            {
+                throw new NullReferenceException($"Templ: Table match \"{Placeholder}\", Table ref is null");
+            }
+            if (Row==null)
+            {
+                throw new NullReferenceException($"Templ: Table match \"{Placeholder}\", Row ref is null");
+            }
+            if (Cell==null)
+            {
+                throw new NullReferenceException($"Templ: Table match \"{Placeholder}\", Cell ref is null");
+            }
         }
     }
     public class TemplMatchPicture : TemplMatchText

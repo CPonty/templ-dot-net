@@ -111,11 +111,8 @@ namespace TemplNET
         public override TemplMatchTable Handler(TemplMatchTable m)
         {
             var e = TemplModelEntry.Get(Model, m.Body);
+            m.Validate();
             var idx = m.RowIndex;
-            if (idx < 0)
-            {
-                throw new IndexOutOfRangeException($"Templ: Row match does not have an index in a table for match \"{m.Body}\"");
-            }
             m.RemovePlaceholder();
             foreach (var key in e.ToStringKeys())
             {
@@ -129,7 +126,7 @@ namespace TemplNET
         public override IEnumerable<TemplMatchTable> FindAll(TemplRegex rxp)
         {
             // Expecting only 1 match per row
-            return TemplMatchTable.Find(rxp, Doc.Tables, maxPerRow:1);
+            return TemplMatchTable.Find(rxp, Doc.Tables, maxPerRow:1).Reverse();
         }
     }
     public class TemplRepeatingCellModule : TemplModule<TemplMatchTable>
@@ -142,14 +139,7 @@ namespace TemplNET
             var width = m.Table.Rows.First().Cells.Count;
             var keys = TemplModelEntry.Get(Model, m.Body).ToStringKeys();
             var nrows = keys.Count() / width + 1;
-            if (m.RowIndex < 0)
-            {
-                throw new IndexOutOfRangeException($"Templ: Cell match does not have a row index in a table for match \"{m.Body}\"");
-            }
-            if (m.CellIndex < 0)
-            {
-                throw new IndexOutOfRangeException($"Templ: Cell match does not have a cell index in a table for match \"{m.Body}\"");
-            }
+            m.Validate();
             m.RemovePlaceholder();
             for (int n=0; n< width; n++)
             {
@@ -219,8 +209,8 @@ namespace TemplNET
         }
         public override IEnumerable<TemplMatchTable> FindAll(TemplRegex rxp)
         {
-            // Expecting only 1 match per cell
-            return TemplMatchTable.Find(rxp, Doc.Tables, maxPerCell:1);
+            // Expecting only 1 match per row (yes really, per row)
+            return TemplMatchTable.Find(rxp, Doc.Tables, maxPerRow:1).Reverse();
         }
     }
     public class TemplRepeatingTextModule : TemplModule<TemplMatchText>
