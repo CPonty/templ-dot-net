@@ -8,14 +8,16 @@ namespace TemplNET
 {
     public class TemplBuilder
     {
+        public bool Debug = TemplConfig.Debug;
+
         public List<TemplModule> Modules = new List<TemplModule>();
         public List<TemplModule> DefaultModules = new List<TemplModule>();
 
-        public object Model;
         public DocX Doc;
+        public object Model;
+        public string Filename;
         public MemoryStream Stream = new MemoryStream();
         public byte[] Bytes => this.Stream.ToArray();
-        public string Filename;
 
         private TemplBuilder(bool useDefaultModules)
         {
@@ -95,7 +97,7 @@ namespace TemplNET
             Stream = new MemoryStream();
             Doc.SaveAs(Stream);
 
-            if (TemplConfig.Debug)
+            if (Debug)
             {
                 //this.SaveAs(DebugOutPath);
             }
@@ -117,7 +119,7 @@ namespace TemplNET
         /// <param name="s"></param>
         public void Logp(string s)
         {
-            if (TemplConfig.Debug)
+            if (Debug)
             {
                 //Doc.InsertParagraph(s);
             }

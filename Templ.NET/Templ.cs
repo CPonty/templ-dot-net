@@ -11,7 +11,7 @@ namespace TemplNET
 
         public byte[] Bytes => Builder.Bytes;
         public Stream Stream => Builder.Stream;
-        public string File => Builder.Filename;
+        public string Filename => Builder.Filename;
         public List<TemplModule> Modules => Builder.Modules;
         public List<string> ModuleNames => Modules.Select(mod => mod.Name).ToList();
 
@@ -28,6 +28,11 @@ namespace TemplNET
             Builder = new TemplBuilder(templatePath);
         }
 
+        public Templ WithDebugging(bool debug)
+        {
+            Builder.Debug = debug;
+            return this;
+        }
         public Templ Build(object model)
         {
             Builder.Build(model);
