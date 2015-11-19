@@ -38,5 +38,11 @@ namespace TemplNET
             Builder.Build(model);
             return this;
         }
+        public Templ SaveAs(string fileName)
+        {
+            Builder.SaveAs(fileName);
+            return this;
+        }
+
     }
 }
