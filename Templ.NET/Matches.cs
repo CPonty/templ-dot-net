@@ -15,13 +15,10 @@ namespace TemplNET
     }
     public class TemplMatchText : TemplMatchPara
     {
-        public static IEnumerable<TemplMatchText> Find(TemplRegex rxp, IEnumerable<Paragraph> paragraphs) 
+        public static IEnumerable<TemplMatchText> Find(TemplRegex rxp, IEnumerable<Paragraph> paragraphs, 
+            uint maxPerParagraph = TemplConfig.MaxMatchesPerScope) 
         {
-            return paragraphs.SelectMany(p => Find(rxp, p));
-        }
-        public static IEnumerable<TemplMatchText> Find(TemplRegex rxp, IEnumerable<Paragraph> paragraphs, int n) 
-        {
-            return paragraphs.SelectMany(p => Find(rxp, p).Take(n));
+            return paragraphs.SelectMany(p => Find(rxp, p).Take((int)maxPerParagraph));
         }
         public static IEnumerable<TemplMatchText> Find(TemplRegex rxp, Paragraph p) 
         {
@@ -36,13 +33,10 @@ namespace TemplNET
     {
         public Section Section;
 
-        public static IEnumerable<TemplMatchSection> Find(TemplRegex rxp, IEnumerable<Section> sections) 
+        public static IEnumerable<TemplMatchSection> Find(TemplRegex rxp, IEnumerable<Section> sections, 
+            uint maxPerSection = TemplConfig.MaxMatchesPerScope) 
         {
-            return sections.SelectMany(sec => Find(rxp, sec));
-        }
-        public static IEnumerable<TemplMatchSection> Find(TemplRegex rxp, IEnumerable<Section> sections, int n) 
-        {
-            return sections.SelectMany(sec => Find(rxp, sec).Take(n));
+            return sections.SelectMany(sec => Find(rxp, sec).Take((int)maxPerSection));
         }
         public static IEnumerable<TemplMatchSection> Find(TemplRegex rxp, Section sec) 
         {
@@ -67,100 +61,45 @@ namespace TemplNET
     public class TemplMatchTable : TemplMatchPara
     {
         public Table Table;
-
-        public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, IEnumerable<Table> tables, int n) 
-        {
-            return tables.SelectMany(t => Find(rxp, t).Take(n));
-        }
-        public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, IEnumerable<Table> tables) 
-        {
-            return tables.SelectMany(t => Find(rxp, t));
-        }
-        public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, Table t) 
-        {
-            return Find<TemplMatchTable>(rxp, t.Rows[0].Cells[0].Paragraphs).Select(m =>
-            {
-                m.Table = t;
-                return m;
-            });
-        }
-    }
-    public class TemplMatchRow : TemplMatchTable
-    {
         public Row Row;
         public int RowIndex;
-
-        public static new IEnumerable<TemplMatchRow> Find(TemplRegex rxp, IEnumerable<Table> tables, int n)
-        {
-            return tables.SelectMany(t => Find(rxp, t, n));
-        }
-        public static new IEnumerable<TemplMatchRow> Find(TemplRegex rxp, IEnumerable<Table> tables)
-        {
-            return tables.SelectMany(t => Find(rxp, t));
-        }
-        public static new IEnumerable<TemplMatchRow> Find(TemplRegex rxp, Table t)
-        {
-            return Enumerable.Range(0,t.RowCount).SelectMany(rIdx => FindInRow(rxp, t, rIdx));
-        }
-        public static IEnumerable<TemplMatchRow> Find(TemplRegex rxp, Table t, int n)
-        {
-            return Enumerable.Range(0,t.RowCount).SelectMany(rIdx => FindInRow(rxp, t, rIdx).Take(n));
-        }
-
-        private static IEnumerable<TemplMatchRow> FindInRow(TemplRegex rxp, Table t, int rowIndex)
-        {
-            var r = t.Rows[rowIndex];
-            return Find<TemplMatchRow>(rxp, r.Cells.SelectMany(c => c.Paragraphs)).Select(m =>
-            {
-                m.Table = t;
-                m.Row = r;
-                m.RowIndex = rowIndex;
-                return m;
-            });
-        }
-    }
-    public class TemplMatchCell : TemplMatchRow
-    {
         public Cell Cell;
         public int CellIndex;
 
-        public static new IEnumerable<TemplMatchCell> Find(TemplRegex rxp, IEnumerable<Table> tables)
+        public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, IEnumerable<Table> tables, 
+            uint maxPerTable = TemplConfig.MaxMatchesPerScope,
+            uint maxPerRow = TemplConfig.MaxMatchesPerScope,
+            uint maxPerCell = TemplConfig.MaxMatchesPerScope)
         {
-            return tables.SelectMany(t => Find(rxp, t));
+            return tables.SelectMany(t => Find(rxp, t, maxPerTable, maxPerRow, maxPerCell));
         }
-        public static new IEnumerable<TemplMatchCell> Find(TemplRegex rxp, IEnumerable<Table> tables, int n)
+        public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, Table t, 
+            uint maxPerTable = TemplConfig.MaxMatchesPerScope,
+            uint maxPerRow = TemplConfig.MaxMatchesPerScope,
+            uint maxPerCell = TemplConfig.MaxMatchesPerScope)
         {
-            return tables.SelectMany(t => Find(rxp, t, n));
+            return Enumerable.Range(0,t.RowCount).SelectMany(rowIdx => Find(rxp, t, rowIdx, maxPerRow, maxPerCell)).Take((int)maxPerTable);
         }
-        public static new IEnumerable<TemplMatchCell> Find(TemplRegex rxp, Table t)
+        public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, Table t, int rowIdx,
+            uint maxPerRow = TemplConfig.MaxMatchesPerScope,
+            uint maxPerCell = TemplConfig.MaxMatchesPerScope)
         {
-            return Enumerable.Range(0,t.RowCount).SelectMany(rowIdx => FindInRow(rxp, t, rowIdx));
+            return Enumerable.Range(0,t.Rows[rowIdx].Cells.Count).SelectMany(cellIdx => Find(rxp, t, rowIdx, cellIdx, maxPerCell)).Take((int)maxPerRow);
         }
-        public static new IEnumerable<TemplMatchCell> Find(TemplRegex rxp, Table t, int n)
-        {
-            return Enumerable.Range(0,t.RowCount).SelectMany(rowIdx => FindInRow(rxp, t, rowIdx, n));
-        }
-
-        private static IEnumerable<TemplMatchCell> FindInRow(TemplRegex rxp, Table t, int rowIdx)
-        {
-            return Enumerable.Range(0,t.Rows[rowIdx].Cells.Count).SelectMany(cellIdx => FindInCell(rxp, t, rowIdx, cellIdx));
-        }
-        private static IEnumerable<TemplMatchCell> FindInRow(TemplRegex rxp, Table t, int rowIdx, int n)
-        {
-            return Enumerable.Range(0,t.Rows[rowIdx].Cells.Count).SelectMany(cellIdx => FindInCell(rxp, t, rowIdx, cellIdx).Take(1));
-        }
-
-        private static IEnumerable<TemplMatchCell> FindInCell(TemplRegex rxp, Table t, int rowIdx, int cellIdx)
+        public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, Table t, int rowIdx, int cellIdx,
+            uint maxPerCell = TemplConfig.MaxMatchesPerScope)
         {
             var r = t.Rows[rowIdx];
             var c = r.Cells[cellIdx];
-            return Find<TemplMatchCell>(rxp, c.Paragraphs).Select(m =>
+            return Find<TemplMatchTable>(rxp, c.Paragraphs).Select(m =>
             {
                 m.Table = t;
                 m.Row = r;
                 m.Cell = c;
+                m.RowIndex = rowIdx;
+                m.CellIndex = cellIdx;
                 return m;
-            });
+            }).Take((int)maxPerCell);
         }
     }
     public class TemplMatchPicture : TemplMatchText
@@ -168,7 +107,7 @@ namespace TemplNET
         public Picture Picture;
         public int Width;
 
-        public static new IEnumerable<TemplMatchPicture> Find(TemplRegex rxp, IEnumerable<Paragraph> paragraphs) 
+        public static IEnumerable<TemplMatchPicture> Find(TemplRegex rxp, IEnumerable<Paragraph> paragraphs) 
         {
             return paragraphs.SelectMany(p => Find(rxp, p));
         }

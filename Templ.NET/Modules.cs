@@ -100,15 +100,15 @@ namespace TemplNET
         public override IEnumerable<TemplMatchTable> FindAll(TemplRegex rxp)
         {
             // Expecting only 1 match per table
-            return TemplMatchTable.Find(rxp, Doc.Tables, 1);
+            return TemplMatchTable.Find(rxp, Doc.Tables, maxPerTable:1);
         }
     }
-    public class TemplRepeatingRowModule : TemplModule<TemplMatchRow>
+    public class TemplRepeatingRowModule : TemplModule<TemplMatchTable>
     {
         public TemplRepeatingRowModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
-        public override TemplMatchRow Handler(TemplMatchRow m)
+        public override TemplMatchTable Handler(TemplMatchTable m)
         {
             var e = TemplModelEntry.Get(Model, m.Body);
             var idx = m.RowIndex;
@@ -126,18 +126,18 @@ namespace TemplNET
             m.Removed = true;
             return m;
         }
-        public override IEnumerable<TemplMatchRow> FindAll(TemplRegex rxp)
+        public override IEnumerable<TemplMatchTable> FindAll(TemplRegex rxp)
         {
             // Expecting only 1 match per row
-            return TemplMatchRow.Find(rxp, Doc.Tables, 1);
+            return TemplMatchTable.Find(rxp, Doc.Tables, maxPerRow:1);
         }
     }
-    public class TemplRepeatingCellModule : TemplModule<TemplMatchCell>
+    public class TemplRepeatingCellModule : TemplModule<TemplMatchTable>
     {
         public TemplRepeatingCellModule(string name, TemplBuilder docBuilder, string[] prefixes)
             : base(name, docBuilder, prefixes)
         { }
-        public override TemplMatchCell Handler(TemplMatchCell m)
+        public override TemplMatchTable Handler(TemplMatchTable m)
         {
             var width = m.Table.Rows.First().Cells.Count;
             var keys = TemplModelEntry.Get(Model, m.Body).ToStringKeys();
@@ -217,10 +217,10 @@ namespace TemplNET
             CellClear(dstCell, true);
             srcCell.Paragraphs.ToList().ForEach(p => dstCell.InsertParagraph(p));
         }
-        public override IEnumerable<TemplMatchCell> FindAll(TemplRegex rxp)
+        public override IEnumerable<TemplMatchTable> FindAll(TemplRegex rxp)
         {
             // Expecting only 1 match per cell
-            return TemplMatchCell.Find(rxp, Doc.Tables, 1);
+            return TemplMatchTable.Find(rxp, Doc.Tables, maxPerCell:1);
         }
     }
     public class TemplRepeatingTextModule : TemplModule<TemplMatchText>
