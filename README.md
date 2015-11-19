@@ -13,6 +13,20 @@ A C# report generation engine, combining .docx templates with strongly-typed dat
 Package-Install Templ.NET
 ```
 
+#### Simple Usage
+
+```C#
+var data = new { title = "Hello World!" } ;
+var document = new Templ("C:\template.docx");
+document.Build(data);
+
+// Console application
+document.SaveAs("C:\output.docx");
+
+// ASP.NET MVC controller 
+return new FileContentResult(document.Bytes, Templ.DocxMIMEType);
+```
+
 #### Documentation
 
 - Coming soon!
