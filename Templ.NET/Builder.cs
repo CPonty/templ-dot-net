@@ -8,7 +8,7 @@ namespace TemplNET
 {
     public class TemplBuilder
     {
-        public bool Debug = TemplConfig.Debug;
+        public bool Debug = TemplConst.Debug;
 
         public List<TemplModule> Modules = new List<TemplModule>();
         public List<TemplModule> DefaultModules = new List<TemplModule>();
@@ -24,17 +24,17 @@ namespace TemplNET
             //Add default handlers for Sections,tables,pictures,text,TOC,comments. Ordering is important.
             DefaultModules = new List<TemplModule>()
             {
-                new TemplSectionModule("Section", this, new string[] { "sec" }),
-                new TemplPictureReplaceModule("Picture Replace", this, new string[] { "pic" }),
-                new TemplRepeatingTextModule("Repeating Text", this, new string[] { "li" }),
-                new TemplRepeatingCellModule("Repeating Cell", this, new string[] { "cel" }),
-                new TemplRepeatingRowModule("Repeating Row", this, new string[] { "row" }),
-                new TemplPictureReplaceModule("Picture Replace", this, new string[] { "pic" }),
-                new TemplTableModule("Table", this, new string[] { "tab" }),
-                new TemplPicturePlaceholderModule("Picture Placeholder", this, new string[] { "pic" }),
-                new TemplTextModule("Text", this, new string[] { "txt" }),
-                new TemplTOCModule("Table of Contents", this, new string[] { "toc" }),
-                new TemplCommentsModule("Comments", this, new string[] { "!" }),
+                new TemplSectionModule("Section", this, new string[] { TemplConst.Tag.Section }),
+                new TemplPictureReplaceModule("Picture Replace", this, new string[] { TemplConst.Tag.Picture }),
+                new TemplRepeatingTextModule("Repeating Text", this, new string[] { TemplConst.Tag.List }),
+                new TemplRepeatingCellModule("Repeating Cell", this, new string[] { TemplConst.Tag.Cell }),
+                new TemplRepeatingRowModule("Repeating Row", this, new string[] { TemplConst.Tag.Row }),
+                new TemplPictureReplaceModule("Picture Replace", this, new string[] { TemplConst.Tag.Picture }),
+                new TemplTableModule("Table", this, new string[] { TemplConst.Tag.Table }),
+                new TemplPicturePlaceholderModule("Picture Placeholder", this, new string[] { TemplConst.Tag.Picture }),
+                new TemplTextModule("Text", this, new string[] { TemplConst.Tag.Text }),
+                new TemplTOCModule("Table of Contents", this, new string[] { TemplConst.Tag.Contents }),
+                new TemplCommentsModule("Comments", this, new string[] { TemplConst.Tag.Comment }),
             };
             Modules.AddRange(DefaultModules.Where(mod => useDefaultModules));
         }

@@ -16,7 +16,7 @@ namespace TemplNET
     public class TemplMatchText : TemplMatchPara
     {
         public static IEnumerable<TemplMatchText> Find(TemplRegex rxp, IEnumerable<Paragraph> paragraphs, 
-            uint maxPerParagraph = TemplConfig.MaxMatchesPerScope) 
+            uint maxPerParagraph = TemplConst.MaxMatchesPerScope) 
         {
             return paragraphs.SelectMany(p => Find(rxp, p).Take((int)maxPerParagraph));
         }
@@ -34,7 +34,7 @@ namespace TemplNET
         public Section Section;
 
         public static IEnumerable<TemplMatchSection> Find(TemplRegex rxp, IEnumerable<Section> sections, 
-            uint maxPerSection = TemplConfig.MaxMatchesPerScope) 
+            uint maxPerSection = TemplConst.MaxMatchesPerScope) 
         {
             return sections.SelectMany(sec => Find(rxp, sec).Take((int)maxPerSection));
         }
@@ -66,27 +66,27 @@ namespace TemplNET
         public int CellIndex = -1;
 
         public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, IEnumerable<Table> tables, 
-            uint maxPerTable = TemplConfig.MaxMatchesPerScope,
-            uint maxPerRow = TemplConfig.MaxMatchesPerScope,
-            uint maxPerCell = TemplConfig.MaxMatchesPerScope)
+            uint maxPerTable = TemplConst.MaxMatchesPerScope,
+            uint maxPerRow = TemplConst.MaxMatchesPerScope,
+            uint maxPerCell = TemplConst.MaxMatchesPerScope)
         {
             return tables.SelectMany(t => Find(rxp, t, maxPerTable, maxPerRow, maxPerCell));
         }
         public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, Table t, 
-            uint maxPerTable = TemplConfig.MaxMatchesPerScope,
-            uint maxPerRow = TemplConfig.MaxMatchesPerScope,
-            uint maxPerCell = TemplConfig.MaxMatchesPerScope)
+            uint maxPerTable = TemplConst.MaxMatchesPerScope,
+            uint maxPerRow = TemplConst.MaxMatchesPerScope,
+            uint maxPerCell = TemplConst.MaxMatchesPerScope)
         {
             return Enumerable.Range(0,t.RowCount).SelectMany(rowIdx => Find(rxp, t, rowIdx, maxPerRow, maxPerCell)).Take((int)maxPerTable);
         }
         public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, Table t, int rowIdx,
-            uint maxPerRow = TemplConfig.MaxMatchesPerScope,
-            uint maxPerCell = TemplConfig.MaxMatchesPerScope)
+            uint maxPerRow = TemplConst.MaxMatchesPerScope,
+            uint maxPerCell = TemplConst.MaxMatchesPerScope)
         {
             return Enumerable.Range(0,t.Rows[rowIdx].Cells.Count).SelectMany(cellIdx => Find(rxp, t, rowIdx, cellIdx, maxPerCell)).Take((int)maxPerRow);
         }
         public static IEnumerable<TemplMatchTable> Find(TemplRegex rxp, Table t, int rowIdx, int cellIdx,
-            uint maxPerCell = TemplConfig.MaxMatchesPerScope)
+            uint maxPerCell = TemplConst.MaxMatchesPerScope)
         {
             return Find<TemplMatchTable>(rxp, t.Rows[rowIdx].Cells[cellIdx].Paragraphs).Select(m =>
             {

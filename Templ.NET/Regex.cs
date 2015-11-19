@@ -21,14 +21,14 @@ namespace TemplNET
 
         public string Text(string name)
         {
-            return $"{TemplConfig.MatchOpen}{Prefix}{TemplConfig.FieldSep}{name}{TemplConfig.MatchClose}";
+            return $"{TemplConst.MatchOpen}{Prefix}{TemplConst.FieldSep}{name}{TemplConst.MatchClose}";
         }
         public static Regex BuildPattern(string prefix)
         {
             return new Regex(
-                       Regex.Escape($"{TemplConfig.MatchOpen}{prefix}{TemplConfig.FieldSep}") + @"([^" 
-                     + Regex.Escape(TemplConfig.MatchClose) + "]+)" 
-                     + Regex.Escape(TemplConfig.MatchClose), Options);
+                       Regex.Escape($"{TemplConst.MatchOpen}{prefix}{TemplConst.FieldSep}") + @"([^" 
+                     + Regex.Escape(TemplConst.MatchClose) + "]+)" 
+                     + Regex.Escape(TemplConst.MatchClose), Options);
         }
     }
 }
