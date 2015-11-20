@@ -6,7 +6,7 @@
 
 <img alt="Console Output" src="https://dl.dropboxusercontent.com/u/39512614/github/templ-dot-net/examples-console.PNG" width="640">
 
-This app simply builds the provided templates (`Templates/*.docx`).
+This app simply builds the provided templates ([`Templates/*.docx`](https://github.com/CPonty/templ-dot-net/tree/master/Examples/ConsoleApp/Templates))
 
 ## Run
 
