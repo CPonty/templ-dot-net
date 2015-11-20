@@ -19,13 +19,7 @@ Package-Install Templ.NET
 <img alt="HelloWorld After" src="https://dl.dropboxusercontent.com/u/39512614/github/templ-dot-net/examples-after.PNG" width="325">
 
 ```C#
-public class Model
-{
-  public string Title = "Hello World!";
-}
-
-var data = new Model();
-var document = Templ.Load("C:\template.docx").Build(data);
+var document = Templ.Load("C:\template.docx").Build( new { Title = "Hello World!" });
 
 // Console application
 document.SaveAs("C:\output.docx");
