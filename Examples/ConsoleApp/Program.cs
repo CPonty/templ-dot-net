@@ -20,7 +20,7 @@ namespace TemplTest
     /// </summary>
     class Program
     {
-        static string root = @"..\..\..\"; // "Examples" folder
+        static string root = @"..\..\";
 
         static Dictionary<string, object> templates
          = new Dictionary<string, object>()
@@ -32,17 +32,17 @@ namespace TemplTest
         {
             templates.ToList().ForEach(e => FillTemplate(e.Key, e.Value));
 
-            Console.WriteLine("\n All outputs saved to " + Path.GetFullPath(root));
+            Console.WriteLine("\n All outputs saved to " + Path.GetFullPath(root + ".."));
         }
 
-        static void FillTemplate(string file, object model)
+        static void FillTemplate(string name, object model)
         {
-            var filePath = root + @"Templates\" + file;
-            var output = root + file;
+            var file = root + @"Templates\" + name;
+            var output = root + @"..\" + name;
 
-            Console.WriteLine("Generating " + file);
+            Console.WriteLine("Generating " + name);
 
-            Templ.Load(filePath).Build(model).SaveAs(output);
+            Templ.Load(file).Build(model).SaveAs(output);
         }
     }
 }
