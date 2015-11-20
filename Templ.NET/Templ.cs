@@ -15,17 +15,27 @@ namespace TemplNET
         public List<TemplModule> Modules => Builder.Modules;
         public List<string> ModuleNames => Modules.Select(mod => mod.Name).ToList();
 
-        public Templ(byte[] templateFile)
+        private Templ() { } // Constructor is private
+        public static Templ Load(byte[] templateFile)
         {
-            Builder = new TemplBuilder(templateFile);
+            return new Templ()
+            {
+                Builder = new TemplBuilder(templateFile)
+            };
         }
-        public Templ(MemoryStream templateFile)
+        public static Templ Load(MemoryStream templateFile)
         {
-            Builder = new TemplBuilder(templateFile);
+            return new Templ()
+            {
+                Builder = new TemplBuilder(templateFile)
+            };
         }
-        public Templ(string templatePath)
+        public static Templ Load(string templatePath)
         {
-            Builder = new TemplBuilder(templatePath);
+            return new Templ()
+            {
+                Builder = new TemplBuilder(templatePath)
+            };
         }
 
         public Templ WithDebugging(bool debug)

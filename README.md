@@ -17,7 +17,7 @@ Package-Install Templ.NET
 
 ```C#
 var data = new { title = "Hello World!" } ;
-var document = new Templ("C:\template.docx").Build(data);
+var document = Templ.Load("C:\template.docx").Build(data);
 
 // Console application
 document.SaveAs("C:\output.docx");

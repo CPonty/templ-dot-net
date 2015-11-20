@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Templ", "Templ.NET\Templ.NET.csproj", "{E49A2C1C-8D8D-4869-AF3A-2CA214CC61A9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Templ.NET", "Templ.NET\Templ.NET.csproj", "{E49A2C1C-8D8D-4869-AF3A-2CA214CC61A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsoleApp", "Examples\ConsoleApp\TestConsoleApp.csproj", "{70D961B2-C37A-4DF5-A4D4-6B4AC42FD8DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{E49A2C1C-8D8D-4869-AF3A-2CA214CC61A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E49A2C1C-8D8D-4869-AF3A-2CA214CC61A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E49A2C1C-8D8D-4869-AF3A-2CA214CC61A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70D961B2-C37A-4DF5-A4D4-6B4AC42FD8DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70D961B2-C37A-4DF5-A4D4-6B4AC42FD8DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70D961B2-C37A-4DF5-A4D4-6B4AC42FD8DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70D961B2-C37A-4DF5-A4D4-6B4AC42FD8DF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
