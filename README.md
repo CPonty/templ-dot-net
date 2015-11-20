@@ -1,4 +1,4 @@
-<img src="https://dl.dropboxusercontent.com/u/39512614/github/templ-dot-net/templ.net.png" width="640">
+<img alt="Templ.NET" src="https://dl.dropboxusercontent.com/u/39512614/github/templ-dot-net/templ.net.png" width="640">
 
 ***
 
