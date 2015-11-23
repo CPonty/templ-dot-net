@@ -2,7 +2,7 @@
 
 [NuGet](https://www.nuget.org/packages/Templ.NET) | [Templates](https://github.com/CPonty/templ-dot-net/tree/master/Examples/ConsoleApp/Templates) | [Example](https://github.com/CPonty/templ-dot-net/tree/master/Examples/ConsoleApp) | [Documentation](#)
 
-<img alt="NugetVersion" src="https://img.shields.io/nuget/v/Templ.NET.svg" />
+<img alt="NuGet Downloads" src="https://img.shields.io/nuget/dt/Templ.NET.svg" /> <img alt="NugetVersion" src="https://img.shields.io/nuget/v/Templ.NET.svg" />
 
 ***
 
