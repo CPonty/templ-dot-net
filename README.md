@@ -13,6 +13,8 @@ A C# report generation engine, combining .docx templates with strongly-typed dat
 Package-Install Templ.NET
 ```
 
+<img alt="NugetVersion" src="https://img.shields.io/nuget/v/Templ.NET.svg" />
+
 #### Simple Usage
 
 <img alt="HelloWorld Before" src="https://dl.dropboxusercontent.com/u/39512614/github/templ-dot-net/examples-before.PNG" width="320">
