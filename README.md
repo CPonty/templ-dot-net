@@ -14,7 +14,7 @@ A C# report generation engine, combining .docx templates with strongly-typed dat
 
 #### Install via Nuget
 ```
-Package-Install Templ.NET
+Install-Package Templ.NET
 ```
 
 #### Simple Usage
