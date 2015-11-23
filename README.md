@@ -1,4 +1,8 @@
-<img alt="Templ.NET" src="https://dl.dropboxusercontent.com/u/39512614/github/templ-dot-net/templ.net.png" width="640">
+<img alt="Templ.NET" src="https://dl.dropboxusercontent.com/u/39512614/github/templ-dot-net/templ.net.png">
+
+[NuGet Package](https://www.nuget.org/packages/Templ.NET) | [Templates](https://github.com/CPonty/templ-dot-net/tree/master/Examples/ConsoleApp/Templates) | [Example Applications](https://github.com/CPonty/templ-dot-net/tree/master/Examples/ConsoleApp) | [Documentation](#)
+
+<img alt="NugetVersion" src="https://img.shields.io/nuget/v/Templ.NET.svg" />
 
 ***
 
@@ -8,12 +12,10 @@ A C# report generation engine, combining .docx templates with strongly-typed dat
 
 ***
 
-#### [Install via Nuget](https://www.nuget.org/packages/Templ.NET)
+#### Install via Nuget
 ```
 Package-Install Templ.NET
 ```
-
-<img alt="NugetVersion" src="https://img.shields.io/nuget/v/Templ.NET.svg" />
 
 #### Simple Usage
 
@@ -29,13 +31,4 @@ document.SaveAs("C:\output.docx");
 // ASP.NET MVC controller 
 return new FileContentResult(document.Bytes, Templ.DocxMIMEType);
 ```
-
-#### Examples
-
- - [Templates](https://github.com/CPonty/templ-dot-net/tree/master/Examples/ConsoleApp/Templates)
- - [Console Application](https://github.com/CPonty/templ-dot-net/tree/master/Examples/ConsoleApp)
-
-#### Documentation
-
-- Coming soon!
 
