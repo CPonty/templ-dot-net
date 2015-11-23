@@ -95,5 +95,13 @@ namespace TemplNET
         /// clone
         /// </summary>
         public TemplDoc Copy() => new TemplDoc(Commit().Bytes);
+
+        /* Helper methods for grabbing DocX content */
+        public static IEnumerable<Paragraph> Paragraphs(DocX doc)
+        {
+            return doc.Paragraphs
+            .Concat(doc.Headers?.odd?.Paragraphs?.ToList() ?? new List<Paragraph>())
+            .Concat(doc.Footers?.odd?.Paragraphs?.ToList() ?? new List<Paragraph>());
+        }
     }
 }

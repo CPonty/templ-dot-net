@@ -229,7 +229,7 @@ namespace TemplNET
         public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
         {
             // Expecting only 1 match per paragraph
-            return TemplMatchText.Find(rxp, doc.Paragraphs, 1);
+            return TemplMatchText.Find(rxp, TemplDoc.Paragraphs(doc), 1);
         }
     }
     public class TemplPictureReplaceModule : TemplModule<TemplMatchPicture>
@@ -255,7 +255,7 @@ namespace TemplNET
         }
         public override IEnumerable<TemplMatchPicture> FindAll(DocX doc, TemplRegex rxp)
         {
-            return TemplMatchPicture.Find(rxp, doc.Paragraphs);
+            return TemplMatchPicture.Find(rxp, TemplDoc.Paragraphs(doc));
         }
     }
     public class TemplPicturePlaceholderModule : TemplModule<TemplMatchText>
@@ -296,7 +296,7 @@ namespace TemplNET
         }
         public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
         {
-            return TemplMatchText.Find(rxp, doc.Paragraphs);
+            return TemplMatchText.Find(rxp, TemplDoc.Paragraphs(doc));
         }
     }
     public class TemplTextModule : TemplModule<TemplMatchText>
@@ -311,7 +311,7 @@ namespace TemplNET
         }
         public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
         {
-            return TemplMatchText.Find(rxp, doc.Paragraphs);
+            return TemplMatchText.Find(rxp, TemplDoc.Paragraphs(doc));
         }
     }
     public class TemplTOCModule : TemplModule<TemplMatchText>
@@ -346,7 +346,7 @@ namespace TemplNET
         }
         public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
         {
-            return TemplMatchText.Find(rxp, doc.Paragraphs);
+            return TemplMatchText.Find(rxp, TemplDoc.Paragraphs(doc));
         }
     }
     public class TemplCommentsModule : TemplModule<TemplMatchText>
@@ -361,7 +361,7 @@ namespace TemplNET
         }
         public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
         {
-            return TemplMatchText.Find(rxp, doc.Paragraphs);
+            return TemplMatchText.Find(rxp, TemplDoc.Paragraphs(doc));
         }
     }
 }
