@@ -39,6 +39,8 @@ namespace TemplNET
         }
         public void BuildFromScope(DocX doc, object model, IEnumerable<T> scope)
         {
+            // Mark module instance as "used" if any matches are being processed
+            Used = (Used || scope.Count() > 0);
             // Note how we are constantly "committing" the changes using ToList().
             // This ensures order is preserved (e.g. all "finds" happen before all "handler"s)
             scope.Select( m => CheckFieldCount(m) ).ToList()
@@ -72,8 +74,9 @@ namespace TemplNET
     public abstract class TemplModule
     {
         public string Name;
+        public bool Used = false;
         public ISet<TemplRegex> Regexes = new HashSet<TemplRegex>();
-        public Func<object, TemplBuilder, object> CustomHandler;
+        public Func<object, TemplDoc, object> CustomHandler;
 
         public TemplModule(string name, string prefix)
         {

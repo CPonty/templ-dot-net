@@ -41,6 +41,8 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -50,11 +52,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Config.cs" />
+    <Compile Include="Debugger.cs" />
     <Compile Include="Graphic.cs" />
     <Compile Include="Match.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="Regex.cs" />
-    <Compile Include="Builder.cs" />
+    <Compile Include="Document.cs" />
     <Compile Include="Matches.cs" />
     <Compile Include="ModelEntry.cs" />
     <Compile Include="Modules.cs" />

@@ -20,6 +20,7 @@ namespace TemplTest
     /// </summary>
     class Program
     {
+        static bool debug = true;
         static string root = @"..\..\";
 
         static Dictionary<string, object> templates
@@ -42,7 +43,8 @@ namespace TemplTest
 
             Console.WriteLine("Generating " + name);
 
-            Templ.Load(file).Build(model).SaveAs(output);
+            var doc = Templ.Load(file, debug).Build(model).SaveAs(output);
+            if (debug) doc.Debugger.SaveAs(output);
         }
     }
 }
