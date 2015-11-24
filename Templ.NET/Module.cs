@@ -5,6 +5,32 @@ using Novacode;
 
 namespace TemplNET
 {
+    public abstract class TemplModule
+    {
+        public string Name;
+        public bool Used = false;
+        public ISet<TemplRegex> Regexes = new HashSet<TemplRegex>();
+        public Func<object, TemplDoc, object> CustomHandler;
+
+        public TemplModule(string name, string prefix)
+        {
+            AddPrefix(prefix);
+            Name = name;
+        }
+
+        protected TemplModule AddPrefix(string prefix)
+        {
+            if (prefix.Contains(TemplConst.FieldSep))
+            {
+                throw new FormatException($"Templ: Module \"{Name}\": prefix \"{prefix}\" cannot contain the field separator '{TemplConst.FieldSep}'");
+            }
+            Regexes.Add(new TemplRegex(prefix));
+            return this;
+        }
+
+        public abstract void Build(DocX doc, object model);
+    }
+
     public abstract class TemplModule<T> : TemplModule where T : TemplMatchPara, new()
     {
         public uint MinFields = 1;
@@ -69,31 +95,5 @@ namespace TemplNET
         /// <param name="rxp"></param>
         /// <param name="doc"></param>
         public abstract IEnumerable<T> FindAll(DocX doc, TemplRegex rxp);
-    }
-
-    public abstract class TemplModule
-    {
-        public string Name;
-        public bool Used = false;
-        public ISet<TemplRegex> Regexes = new HashSet<TemplRegex>();
-        public Func<object, TemplDoc, object> CustomHandler;
-
-        public TemplModule(string name, string prefix)
-        {
-            AddPrefix(prefix);
-            Name = name;
-        }
-
-        protected TemplModule AddPrefix(string prefix)
-        {
-            if (prefix.Contains(TemplConst.FieldSep))
-            {
-                throw new FormatException($"Templ: Module \"{Name}\": prefix \"{prefix}\" cannot contain the field separator '{TemplConst.FieldSep}'");
-            }
-            Regexes.Add(new TemplRegex(prefix));
-            return this;
-        }
-
-        public abstract void Build(DocX doc, object model);
     }
 }

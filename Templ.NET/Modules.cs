@@ -5,16 +5,16 @@ using Novacode;
 
 namespace TemplNET
 {
-        /// <summary>
-        ///This is a utility module, instantiated  by others to handle a sub-scope of the document.
-        ///Don't add it to the main Modules collection. If you use the default constructor it won't do anything.
-        /// </summary>
-    public class TemplSubcollectionModule : TemplModule<TemplMatchText>
+    /// <summary>
+    ///This is a utility module, instantiated  by others to handle a sub-scope of the document.
+    ///Don't add it to the main Modules collection. If you use the default constructor it won't do anything.
+    /// </summary>
+    public class TemplCollectionModule : TemplModule<TemplMatchText>
     {
         private string Path = "";
         private IEnumerable<Paragraph> Paragraphs = new List<Paragraph>();
 
-        public TemplSubcollectionModule(string name = "Subcollection", string prefix = "$")
+        public TemplCollectionModule(string name = "Collection", string prefix = "$")
             : base(name, prefix)
         {
             MinFields = 2;
@@ -51,7 +51,6 @@ namespace TemplNET
             return $"{TemplConst.MatchOpen}{fields.Aggregate((a, b) => $"{a}:{b}") }{TemplConst.MatchClose}";
         }
     }
-
     public class TemplSectionModule : TemplModule<TemplMatchSection>
     {
         public TemplSectionModule(string name, string prefix)
@@ -112,7 +111,7 @@ namespace TemplNET
             foreach (var key in e.ToStringKeys())
             {
                 var r = m.Table.InsertRow(m.Row, ++idx);
-                new TemplSubcollectionModule().BuildFromScope(doc, model, r.Paragraphs, $"{m.Body}[{key}]");
+                new TemplCollectionModule().BuildFromScope(doc, model, r.Paragraphs, $"{m.Body}[{key}]");
             }
             m.Row.Remove();
             m.Removed = true;
@@ -153,7 +152,7 @@ namespace TemplNET
                 Cell cell = row.Cells[keyIdx % width];
                 if (keyIdx < keys.Count())
                 {
-                    new TemplSubcollectionModule().BuildFromScope(doc, model, cell.Paragraphs, $"{m.Body}[{keys[keyIdx]}]");
+                    new TemplCollectionModule().BuildFromScope(doc, model, cell.Paragraphs, $"{m.Body}[{keys[keyIdx]}]");
                 }
                 else
                 {
@@ -220,7 +219,7 @@ namespace TemplNET
             foreach (var key in e.ToStringKeys())
             {
                 var p = m.Paragraph.InsertParagraphAfterSelf(m.Paragraph);
-                new TemplSubcollectionModule().BuildFromScope(doc, model, new Paragraph[] { p }, $"{m.Body}[{key}]");
+                new TemplCollectionModule().BuildFromScope(doc, model, new Paragraph[] { p }, $"{m.Body}[{key}]");
             }
             m.Paragraph.Remove(false);
             m.Removed = true;
