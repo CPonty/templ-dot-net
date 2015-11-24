@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-using Novacode;
+﻿using System.Text.RegularExpressions;
 
 namespace TemplNET
 {
