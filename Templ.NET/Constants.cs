@@ -24,6 +24,7 @@ namespace TemplNET
             public const string Text = "txt";
             public const string Contents = "toc";
             public const string Comment = "!";
+            public const string Collection = "$";
         }
     }
 }

@@ -5,19 +5,46 @@ using Novacode;
 
 namespace TemplNET
 {
+    /// <summary>
+    /// Represents a code module for the document build process 
+    /// </summary>
+    /// Modules Find and Handle content (Matches) in the document.
+    /// Building a full document template essentially involves executing the modules in a specified sequence.
+    /// <seealso cref="TemplMatch"/>
+    /// <seealso cref="Templ.DefaultModules"/>
     public abstract class TemplModule
     {
+        /// <summary>
+        /// Module instance name. Used as an identifier in the debugger.
+        /// </summary>
         public string Name;
+        /// <summary>
+        /// Flag set if any Match instances were found during the Module's build process
+        /// </summary>
         public bool Used = false;
+        /// <summary>
+        /// The set of placeholder regexes used to find Matches in the document
+        /// </summary>
         public ISet<TemplRegex> Regexes = new HashSet<TemplRegex>();
+        /// <summary>
+        /// An optional second handler function. Assignable per module instance at runtime. 
+        /// </summary>
         public Func<object, TemplDoc, object> CustomHandler;
 
+        /// <summary>
+        /// Creates a code module for the document build process
+        /// </summary>
+        /// <param name="name">Module name</param>
+        /// <param name="prefix">Placeholder prefix when searching for matches</param>
         public TemplModule(string name, string prefix)
         {
             AddPrefix(prefix);
             Name = name;
         }
 
+        /// <summary>
+        /// Given a prefix, add a placeholder to <see cref="Regexes"/>. These are used to find Matches in the document.
+        /// </summary>
         protected TemplModule AddPrefix(string prefix)
         {
             if (prefix.Contains(TemplConst.FieldSep))
@@ -28,28 +55,63 @@ namespace TemplNET
             return this;
         }
 
+        /// <summary>
+        /// Applies all changes to the document.
+        /// <see cref="Templ.Build"/> automatically executes it for all <see cref="Templ.ActiveModules"/>.
+        /// </summary>
         public abstract void Build(DocX doc, object model);
     }
 
+    /// <summary>
+    /// Represents a code module for the document build process.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// Modules Find and Handle content (Matches) in the document.
+    /// Building a full document template essentially involves executing the modules in a specified sequence.
+    /// 
+    /// Each concrete Module class is implemented for a specific Match type.
+    /// 
     public abstract class TemplModule<T> : TemplModule where T : TemplMatchPara, new()
     {
+        /// <summary>
+        /// The minimum # of fields required for a valid placeholder Match. "{prefix:a:b:c}" contains 3 matches.
+        /// </summary>
+        /// <seealso cref="FindAll"/>
         public uint MinFields = 1;
+        /// <summary>
+        /// The maximum # of fields expected for a valid placeholder Match. "{prefix:a:b:c}" contains 3 matches.
+        /// </summary>
+        /// <seealso cref="FindAll"/>
         public uint MaxFields = 1;
+        /// <summary>
+        /// An optional second handler function. Assignable per module instance at runtime. 
+        /// </summary>
         public new Func<DocX, object, T, T> CustomHandler = (doc, model, m) => m;
 
+        /// <summary>
+        /// Creates a code module for the document build process
+        /// </summary>
+        /// <param name="name">Module name</param>
+        /// <param name="prefix">Placeholder prefix when searching for matches</param>
         public TemplModule(string name, string prefix)
             : base(name, prefix)
         { }
 
         /// <summary>
-        /// Add more placeholder prefixes to match against.
+        /// Given a collection of prefixes, add placeholders to <see cref="TemplModule.Regexes"/>.
         /// </summary>
-        /// <param name="prefixes"></param>
+        /// These are used when searching for Matches in the document.
         public TemplModule<T> WithPrefixes(IEnumerable<string> prefixes)
         {
             prefixes.ToList().ForEach(s => AddPrefix(s));
             return this;
         }
+
+        /// <summary>
+        /// Verifies the number of fields in the supplied Match's placeholder is within the min/max expected for this Module.
+        /// <para/> Throws exception if problems are found.
+        /// </summary>
+        /// <param name="m"></param>
         private T CheckFieldCount(T m)
         {
             var l = m.Fields.Length;
@@ -63,6 +125,9 @@ namespace TemplNET
             }
             return m;
         }
+        /// <summary>
+        /// Handle and/or remove a collection of Matches from the document
+        /// </summary>
         public void BuildFromScope(DocX doc, object model, IEnumerable<T> scope)
         {
             // Mark module instance as "used" if any matches are being processed
@@ -75,25 +140,29 @@ namespace TemplNET
                  .Select( m => CustomHandler(doc, model, m)).ToList()
                  .ForEach(m => m.RemoveExpired());
         }
+        /// <summary>
+        /// Find and build all content from the document
+        /// </summary>
         public override void Build(DocX doc, object model)
         {
             BuildFromScope(doc, model, Regexes.SelectMany(rxp => FindAll(doc, rxp)));
         }
+
         /// <summary>
-        /// Container-specific handler.
-        /// Modify the underlying container; mark expired to delete
+        /// Module-specific Match handler.
+        /// Implementations should modify the Matched content, or mark expired to delete
         /// </summary>
-        /// <param name="m"></param>
         /// <param name="doc"></param>
         /// <param name="model"></param>
+        /// <param name="m"></param>
         public abstract T Handler(DocX doc, object model, T m);
 
         /// <summary>
-        /// Container-specific finder.
-        /// Get all instances from the document.
+        /// Module-specific finder.
+        /// Implementations should retrieve all regex-matching content from the document.
         /// </summary>
-        /// <param name="rxp"></param>
         /// <param name="doc"></param>
+        /// <param name="rxp"></param>
         public abstract IEnumerable<T> FindAll(DocX doc, TemplRegex rxp);
     }
 }

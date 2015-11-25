@@ -7,14 +7,53 @@ namespace TemplNET
 {
     /// <summary>
     ///This is a utility module, instantiated  by others to handle a sub-scope of the document.
-    ///Don't add it to the main Modules collection. If you use the default constructor it won't do anything.
+    ///<para/>If you add it to <see cref="Templ.ActiveModules"/>, the default <see cref="TemplModule.Build"/>it won't do anything.
     /// </summary>
+    /// This module is to be be instantiated and used within another module's handler.
+    /// Its purpose is to allow a scope of the document (e.g. a table row) to be copied multiple times.
+    ///
+    /// Each copy of the scope is related to an Entry from the Model; most likely an element of a collection/array.
+    /// Where any placeholders in the scope contain a model path, the template should use the relative path from the 'parent' Entry in the model.
+    /// This module will transform the relative path to absolute.
+    ///    
+    /// Format: {$:prefix:1..n}
+    ///    e.g: {$:txt:Name} // generates {txt:collection[x].Name}
+    ///    e.g: {$:txt:}     // generates {txt:collection[x]}
+    ///    
+    ///prefix=  Any placeholder prefix
+    ///  1..n=  Any placeholder fields
+    /// <example>
+    /// <code>
+    /// // Here the Paragraph 'p' is the Nth in a series of copies, 
+    /// //  corresponding to some collection called 'objects' in the model
+    /// 
+    /// int n;
+    /// Paragraph p;
+    ///
+    /// new TemplCollectionModule().BuildFromScope(document, model, new Paragraph[]{ p }, "objects["+n+"]");
+    ///
+    /// // before: 'p' contained "{$:txt:Name}"
+    /// // after:  'p' contains  "{txt:objects["+n+"].Name}"
+    /// </code>
+    /// <code>
+    /// // Here the collection element is a string, 
+    /// //  so we want to instert it directly
+    /// 
+    /// int n;
+    /// Paragraph p;
+    ///
+    /// new TemplCollectionModule().BuildFromScope(document, model, new Paragraph[]{ p }, "strings["+n+"]");
+    ///
+    /// // before: 'p' contained "{$:txt:}"
+    /// // after:  'p' contains  "{txt:strings["+n+"]}"
+    /// </code>
+    /// </example>
     public class TemplCollectionModule : TemplModule<TemplMatchText>
     {
         private string Path = "";
         private IEnumerable<Paragraph> Paragraphs = new List<Paragraph>();
 
-        public TemplCollectionModule(string name = "Collection", string prefix = "$")
+        public TemplCollectionModule(string name = "Collection", string prefix = TemplConst.Prefix.Section)
             : base(name, prefix)
         {
             MinFields = 2;
@@ -48,12 +87,23 @@ namespace TemplNET
         {
             var fields = m.Fields;
             fields[1] = $"{Path}{(fields[1].Length == 0 || Path.Length == 0?"":".")}{fields[1]}";
-            return $"{TemplConst.MatchOpen}{fields.Aggregate((a, b) => $"{a}:{b}") }{TemplConst.MatchClose}";
+            return $"{TemplConst.MatchOpen}{fields.Aggregate((a, b) => $"{a}{TemplConst.FieldSep}{b}") }{TemplConst.MatchClose}";
         }
     }
+
+    /// <summary>
+    /// The Section module has 2 purposes:
+    /// deleting sections, and providing section matches to <see cref="TemplModule.CustomHandler"/>
+    /// </summary>
+    /// Format: {sec:path:name}
+    ///    e.g: {sec:flags.RemoveSummary:Summary}
+    ///    e.g: {sec::CustomSection}
+    ///    
+    ///  path=  Path in model to a Boolean value. On True, the Section is deleted. Ignored if blank.
+    ///  name=  (Optional) Identifies the section in the custom handler.
     public class TemplSectionModule : TemplModule<TemplMatchSection>
     {
-        public TemplSectionModule(string name, string prefix)
+        public TemplSectionModule(string name, string prefix = TemplConst.Prefix.Section)
             : base(name, prefix)
         {
             MaxFields = 2;
@@ -61,10 +111,10 @@ namespace TemplNET
         public override TemplMatchSection Handler(DocX doc, object model, TemplMatchSection m)
         {
             m.RemovePlaceholder();
-            if (m.Fields.Length==2)
+            if (m.Fields[0].Length > 0)
             {
-                // 2 parts: second part is a bool expression in the model for 'delete section'
-                m.Expired = TemplModelEntry.Get(model, m.Fields[1]).AsType<bool>();
+                // first field is a bool expression in the model for 'delete section'
+                m.Expired = TemplModelEntry.Get(model, m.Fields[0]).AsType<bool>();
             }
             return m;
         }
@@ -74,9 +124,20 @@ namespace TemplNET
             return TemplMatchSection.Find(rxp, doc.GetSections(), 1);
         }
     }
+
+    /// <summary>
+    /// The Table module has 2 purposes:
+    /// deleting tables, and providing table matches to <see cref="TemplModule.CustomHandler"/>
+    /// </summary>
+    /// Format: {tab:path:name}
+    ///    e.g: {tab:flags.RemoveTables:DataTable}
+    ///    e.g: {tab::CustomTable}
+    ///    
+    ///  path=  Path in model to a Boolean value. On True, the Table is deleted. Ignored if blank.
+    ///  name=  (Optional) Identifies the table in the custom handler.
     public class TemplTableModule : TemplModule<TemplMatchTable>
     {
-        public TemplTableModule(string name, string prefix)
+        public TemplTableModule(string name, string prefix = TemplConst.Prefix.Table)
             : base(name, prefix)
         {
             MaxFields = 2;
@@ -84,10 +145,10 @@ namespace TemplNET
         public override TemplMatchTable Handler(DocX doc, object model, TemplMatchTable m)
         {
             m.RemovePlaceholder();
-            if (m.Fields.Length==2)
+            if (m.Fields[0].Length > 0)
             {
-                // 2 parts: second part is a bool expression in the model for 'delete table'
-                m.Expired = TemplModelEntry.Get(model, m.Fields[1]).AsType<bool>();
+                // 2 parts: first part is a bool expression in the model for 'delete table'
+                m.Expired = TemplModelEntry.Get(model, m.Fields[0]).AsType<bool>();
             }
             return m;
         }
@@ -97,9 +158,19 @@ namespace TemplNET
             return TemplMatchTable.Find(rxp, doc.Tables, maxPerTable:1);
         }
     }
+
+    /// <summary>
+    /// Copies a Matched row N times, where N is the number of items in a collection.
+    /// </summary>
+    /// Format: {row:path}
+    ///    e.g: {row:data.people}
+    /// 
+    ///  path=  Path in model to an Array, Collection or Dictionary.
+    /// 
+    /// If the collection is empty, the matched row is deleted.
     public class TemplRepeatingRowModule : TemplModule<TemplMatchTable>
     {
-        public TemplRepeatingRowModule(string name, string prefix)
+        public TemplRepeatingRowModule(string name, string prefix = TemplConst.Prefix.Row)
             : base(name, prefix)
         { }
         public override TemplMatchTable Handler(DocX doc, object model, TemplMatchTable m)
@@ -120,12 +191,28 @@ namespace TemplNET
         public override IEnumerable<TemplMatchTable> FindAll(DocX doc, TemplRegex rxp)
         {
             // Expecting only 1 match per row
+            // Reverse(): If the handler inserts extra rows, we do not want to mess up the indexes of rows above this match.
+            //            Processing  bottom-up avoids this issue.
             return TemplMatchTable.Find(rxp, doc.Tables, maxPerRow:1).Reverse();
         }
     }
+
+    /// <summary>
+    /// Copies a Matched table cell N times, where N is the number of items in a collection.
+    /// </summary>
+    /// Format: {cel:path}
+    ///    e.g: {cel:data.people}
+    /// 
+    ///  path=  Path in model to an Array, Collection or Dictionary.
+    /// 
+    /// Cell copying is assumed to be in a grid structure.
+    /// The cell is copied from left-to-right, beginning on the matched table row.
+    /// Extra table rows are inserted as required.
+    /// 
+    /// If the collection is empty, the matched row is deleted.
     public class TemplRepeatingCellModule : TemplModule<TemplMatchTable>
     {
-        public TemplRepeatingCellModule(string name, string prefix)
+        public TemplRepeatingCellModule(string name, string prefix = TemplConst.Prefix.Cell)
             : base(name, prefix)
         { }
         public override TemplMatchTable Handler(DocX doc, object model, TemplMatchTable m)
@@ -163,13 +250,14 @@ namespace TemplNET
             m.Removed = true;
             return m;
         }
+
         /// <summary>
         /// Clear text and images from all paragraphs in cell.
-        ///
+        /// <para/>
         /// Optional: Delete all paragraph objects.
         /// Keep in mind, cells with zero paragraphs are considered malformed by Word!
         /// Also keep in mind, you will lose formatting info (e.g. font).
-        ///
+        /// <para/>
         /// Special cases of content other than text or images may not be removed;
         /// If this becomes a problem, we can develop it.
         /// </summary>
@@ -204,12 +292,24 @@ namespace TemplNET
         public override IEnumerable<TemplMatchTable> FindAll(DocX doc, TemplRegex rxp)
         {
             // Expecting only 1 match per row (yes really, per row)
+            // Reverse(): If the handler inserts extra rows, we do not want to mess up the indexes of rows above this match.
+            //            Processing  bottom-up avoids this issue.
             return TemplMatchTable.Find(rxp, doc.Tables, maxPerRow:1).Reverse();
         }
     }
+
+    /// <summary>
+    /// Copies a Matched paragraph N times, where N is the number of items in a collection.
+    /// </summary>
+    /// Format: {li:path}
+    ///    e.g: {li:data.people}
+    /// 
+    ///  path=  Path in model to an Array, Collection or Dictionary.
+    /// 
+    /// If the collection is empty, the matched paragraph is deleted.
     public class TemplRepeatingTextModule : TemplModule<TemplMatchText>
     {
-        public TemplRepeatingTextModule(string name, string prefix)
+        public TemplRepeatingTextModule(string name, string prefix = TemplConst.Prefix.List)
             : base(name, prefix)
         { }
         public override TemplMatchText Handler(DocX doc, object model, TemplMatchText m)
@@ -231,9 +331,25 @@ namespace TemplNET
             return TemplMatchText.Find(rxp, TemplDoc.Paragraphs(doc), 1);
         }
     }
+
+    /// <summary>
+    /// Matches pictures from the document whose Description property contain a Picture Placeholder string.
+    /// </summary>
+    /// Format: {pic:path}
+    ///    e.g: {pic:images.logoGraphic}
+    /// 
+    ///  path=  Path in model to a <see cref="TemplGraphic"/>, or Array/Collection of TemplGraphics.
+    /// 
+    /// ==========================================
+    /// The picture is replaced with a placeholder:
+    ///         {pic:path:W}
+    /// 
+    ///     W=  The width of the picture from the document, in pixels
+    /// 
+    /// The new placeholder will be handled by <see cref="TemplPicturePlaceholderModule"/>.
     public class TemplPictureReplaceModule : TemplModule<TemplMatchPicture>
     {
-        public TemplPictureReplaceModule(string name, string prefix)
+        public TemplPictureReplaceModule(string name, string prefix = TemplConst.Prefix.Picture)
             : base(name, prefix)
         { }
         public override TemplMatchPicture Handler(DocX doc, object model, TemplMatchPicture m)
@@ -257,9 +373,19 @@ namespace TemplNET
             return TemplMatchPicture.Find(rxp, TemplDoc.Paragraphs(doc));
         }
     }
+
+    /// <summary>
+    /// Replaces text placeholders in the Document with Pictures from the model.
+    /// </summary>
+    /// Format: {pic:path:W}
+    ///    e.g: {pic:images.logoGraphic}
+    ///    e.g: {pic:images.logoGraphic:250}
+    /// 
+    ///  path=  Path in model to a <see cref="TemplGraphic"/>, or Array/Collection of Graphics.
+    ///     W=  (Optional) width in pixels. If none specified, use the width from the Graphic.
     public class TemplPicturePlaceholderModule : TemplModule<TemplMatchText>
     {
-        public TemplPicturePlaceholderModule(string name, string prefix)
+        public TemplPicturePlaceholderModule(string name, string prefix = TemplConst.Prefix.Picture)
             : base(name, prefix)
         {
             MaxFields = 2;
@@ -298,9 +424,18 @@ namespace TemplNET
             return TemplMatchText.Find(rxp, TemplDoc.Paragraphs(doc));
         }
     }
+
+    /// <summary>
+    /// Replaces text placeholders in the Document with strings.
+    /// </summary>
+    /// Format: {txt:path}
+    ///    e.g: {txt:strings[x]}
+    ///    e.g: {txt:Name}
+    /// 
+    ///  path=  Path in model to a <see cref="string"/>
     public class TemplTextModule : TemplModule<TemplMatchText>
     {
-        public TemplTextModule(string name, string prefix)
+        public TemplTextModule(string name, string prefix = TemplConst.Prefix.Text)
             : base(name, prefix)
         { }
         public override TemplMatchText Handler(DocX doc, object model, TemplMatchText m)
@@ -313,22 +448,25 @@ namespace TemplNET
             return TemplMatchText.Find(rxp, TemplDoc.Paragraphs(doc));
         }
     }
+
+    /// <summary>
+    /// Replaces text placeholders in the Document with a Table of Contents object.
+    /// </summary>
+    /// Format: {toc:title}
+    ///    e.g: {toc:Contents}
+    /// 
+    /// title=  String to use for the title section
+    /// 
+    /// Note that a user must open the document in Microsoft Word for the object's content to auto-generate.
     public class TemplTOCModule : TemplModule<TemplMatchText>
     {
         public const TableOfContentsSwitches Switches =
             TableOfContentsSwitches.O | TableOfContentsSwitches.H | TableOfContentsSwitches.Z | TableOfContentsSwitches.U;
 
-        public TemplTOCModule(string name, string prefix)
+        public TemplTOCModule(string name, string prefix = TemplConst.Prefix.Contents)
             : base(name, prefix)
         { }
 
-        /// <summary>
-        /// Requires user to open in Word and click "Update table of contents". We cannot auto-populate it here.
-        /// </summary>
-        /// <param name="m"></param>
-        /// <param name="doc"></param>
-        /// <param name="model"></param>
-        /// <returns></returns>
         public override TemplMatchText Handler(DocX doc, object model, TemplMatchText m)
         {
             if (m.Removed)
@@ -348,9 +486,17 @@ namespace TemplNET
             return TemplMatchText.Find(rxp, TemplDoc.Paragraphs(doc));
         }
     }
+
+    /// <summary>
+    /// Removes text placeholders from the Document
+    /// </summary>
+    /// Format: {!:text}
+    ///    e.g: {!:This section of the document is blank; user to enter text}
+    /// 
+    ///  text=  Any raw string
     public class TemplCommentsModule : TemplModule<TemplMatchText>
     {
-        public TemplCommentsModule(string name, string prefix)
+        public TemplCommentsModule(string name, string prefix = TemplConst.Prefix.Comment)
             : base(name, prefix)
         { }
         public override TemplMatchText Handler(DocX doc, object model, TemplMatchText m)

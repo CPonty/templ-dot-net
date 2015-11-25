@@ -61,22 +61,22 @@ namespace TemplNET
         /// Active Modules (text, picture, table etc.). Applied to the document at Build time.
         /// </summary>
         /// <seealso cref="Build(object, bool)"/>
-        public List<TemplModule> Modules = new List<TemplModule>();
-        public List<string> ModuleNames => Modules.Select(mod => mod.Name).ToList();
+        public List<TemplModule> ActiveModules = new List<TemplModule>();
+        public List<string> ModuleNames => ActiveModules.Select(mod => mod.Name).ToList();
         private static List<TemplModule> DefaultModules =>
             new List<TemplModule>()
             {
-                new TemplSectionModule("Section", TemplConst.Prefix.Section),
-                new TemplPictureReplaceModule("Picture Replace", TemplConst.Prefix.Picture),
-                new TemplRepeatingTextModule("Repeating Text", TemplConst.Prefix.List),
-                new TemplRepeatingCellModule("Repeating Cell", TemplConst.Prefix.Cell),
-                new TemplRepeatingRowModule("Repeating Row", TemplConst.Prefix.Row),
-                new TemplPictureReplaceModule("Picture Replace", TemplConst.Prefix.Picture),
-                new TemplTableModule("Table", TemplConst.Prefix.Table),
-                new TemplPicturePlaceholderModule("Picture Placeholder", TemplConst.Prefix.Picture),
-                new TemplTextModule("Text", TemplConst.Prefix.Text),
-                new TemplTOCModule("Table of Contents", TemplConst.Prefix.Contents),
-                new TemplCommentsModule("Comments", TemplConst.Prefix.Comment),
+                new TemplSectionModule("Section"),
+                new TemplPictureReplaceModule("Picture Replace"),
+                new TemplRepeatingTextModule("Repeating Text"),
+                new TemplRepeatingCellModule("Repeating Cell"),
+                new TemplRepeatingRowModule("Repeating Row"),
+                new TemplPictureReplaceModule("Picture Replace (2nd Pass)"),
+                new TemplTableModule("Table"),
+                new TemplPicturePlaceholderModule("Picture Placeholder"),
+                new TemplTextModule("Text"),
+                new TemplTOCModule("Table of Contents"),
+                new TemplCommentsModule("Comments"),
             };
 
         private Templ() { } // Empty constructor is private        
@@ -90,7 +90,7 @@ namespace TemplNET
             {
                 Document = document,
                 Debugger = new TemplDebugger(),
-                Modules = (useDefaultModules ? DefaultModules : new List<TemplModule>())
+                ActiveModules = (useDefaultModules ? DefaultModules : new List<TemplModule>())
             };
         }
 
@@ -120,7 +120,7 @@ namespace TemplNET
 
         /// <summary>
         /// Builds the document, using the provided <paramref name="model"/>.
-        /// <para/><see cref="Modules"/> are applied to the document in sequence.
+        /// <para/><see cref="ActiveModules"/> are applied to the document in sequence.
         /// <para/>Enabling <paramref name="debug"/> stores intermediate states after each module.
         /// </summary>
         /// <seealso cref="Debugger"/>
@@ -131,7 +131,7 @@ namespace TemplNET
             {
                 Debugger.AddState(Document, "Init");
             }
-            Modules.ForEach(module =>
+            ActiveModules.ForEach(module =>
             {
                 module.Build(Document.Doc, model);
                 if (debug && module.Used)
@@ -141,7 +141,7 @@ namespace TemplNET
             });
             if (debug)
             {
-                Debugger.AddModuleReport(Modules);
+                Debugger.AddModuleReport(ActiveModules);
             }
             Document.Commit();
             Debugger.Commit();

@@ -5,6 +5,9 @@ using Novacode;
 
 namespace TemplNET
 {
+    /// <summary>
+    /// Represents a match on a placeholder substring in some arbitrary string.
+    /// </summary>
     public class TemplMatchString : TemplMatch
     {
         public static IEnumerable<TemplMatchString> Find(TemplRegex rxp, string s)
@@ -12,6 +15,10 @@ namespace TemplNET
             return Find<TemplMatchString>(rxp, s);
         }
     }
+
+    /// <summary>
+    /// Represents a paragraph, located by matching a placeholder string in the scope of this Paragraph.
+    /// </summary>
     public class TemplMatchText : TemplMatchPara
     {
         public static IEnumerable<TemplMatchText> Find(TemplRegex rxp, IEnumerable<Paragraph> paragraphs, 
@@ -28,6 +35,10 @@ namespace TemplNET
         public TemplMatchText ToPictures(TemplGraphic[] g, int w) => base.ToPictures<TemplMatchText>(g, w);
         public TemplMatchText ToPictures(ICollection<TemplGraphic> g, int w) => base.ToPictures<TemplMatchText>(g, w);
     }
+
+    /// <summary>
+    /// Represents a section, located by matching a placeholder string in the scope of this section's paragraph.
+    /// </summary>
     public class TemplMatchSection : TemplMatchPara
     {
         public Section Section;
@@ -45,6 +56,10 @@ namespace TemplNET
                 return m;
             });
         }
+        /// <summary>
+        /// Removes the placeholder, plus all *contents* of the section. 
+        /// </summary>
+        /// Does not remove the section itself, as we found this can be problematic in DocX (sometimes outputs corrupt document)
         public override void Remove()
         {
             base.Remove();
@@ -56,11 +71,21 @@ namespace TemplNET
             }
         }
     }
+
+    /// <summary>
+    /// Represents a table cell, located by matching a placeholder string in the scope of this table's paragraphs.
+    /// </summary>
     public class TemplMatchTable : TemplMatchPara
     {
         public Table Table;
-        public Row Row => ((RowIndex>=0 && RowIndex<Table?.RowCount) ? Table?.Rows[RowIndex] : null);
+        /// <summary>
+        /// Gets the row object at the stored row index
+        /// </summary>
+        public Row Row => ((RowIndex >= 0 && RowIndex < Table?.RowCount) ? Table?.Rows[RowIndex] : null);
         public int RowIndex = -1;
+        /// <summary>
+        /// Gets the cell object at the stored row,cell index
+        /// </summary>
         public Cell Cell => ((CellIndex>=0 && CellIndex<Row?.Cells?.Count) ? Row?.Cells[CellIndex] : null);
         public int CellIndex = -1;
 
@@ -95,31 +120,41 @@ namespace TemplNET
                 return m;
             }).Take((int)maxPerCell);
         }
+        /// <summary>
+        /// Removes the matched Table from the document.
+        /// </summary>
         public override void Remove()
         {
             base.Remove();
             Table?.Remove();
         }
+        /// <summary>
+        /// Verifies that the row,cell index refers to a valid cell in the table
+        /// </summary>
         public void Validate()
         {
             if (RowIndex < 0 || RowIndex > Table.RowCount)
             {
                 throw new IndexOutOfRangeException($"Templ: Table match \"{Placeholder}\", row index out of bounds ({RowIndex}, Table has {Table.RowCount})");
             }
-            if (Table==null)
+            if (Table == null)
             {
                 throw new NullReferenceException($"Templ: Table match \"{Placeholder}\", Table ref is null");
             }
-            if (Row==null)
+            if (Row == null)
             {
                 throw new NullReferenceException($"Templ: Table match \"{Placeholder}\", Row ref is null");
             }
-            if (Cell==null)
+            if (Cell == null)
             {
                 throw new NullReferenceException($"Templ: Table match \"{Placeholder}\", Cell ref is null");
             }
         }
     }
+
+    /// <summary>
+    /// Represents a picture, located by matching a placeholder string in the scope of this picture's Description field.
+    /// </summary>
     public class TemplMatchPicture : TemplMatchText
     {
         public Picture Picture;
@@ -144,12 +179,18 @@ namespace TemplNET
                 return m;
             });
         }
+        /// <summary>
+        /// Inserts text at the *beginning* of the Picture's Paragraph. Picture is removed.
+        /// </summary>
         public new TemplMatchPicture ToText(string text)
         {
             Paragraph.InsertText(0, text, false);
             Expired = true;
             return this;
         }
+        /// <summary>
+        /// Sets the string in the Picture's Description property.
+        /// </summary>
         public TemplMatchPicture SetDescription(string text)
         {
             if (RemovedPlaceholder || Expired || Removed)
@@ -159,6 +200,9 @@ namespace TemplNET
             Picture.Description = text;
             return this;
         }
+        /// <summary>
+        /// Inserts a picture of a specific pixel width. Aspect ratio is maintained. Matched Picture is removed.
+        /// </summary>
         private void InsertPicture(TemplGraphic graphic, int width)
         {
             if (RemovedPlaceholder || Expired || Removed)
@@ -171,6 +215,9 @@ namespace TemplNET
             RemovePlaceholder();
             Picture = newPic;
         }
+        /// <summary>
+        /// Removes the matched Picture from the document.
+        /// </summary>
         public override void RemovePlaceholder()
         {
             if (RemovedPlaceholder)

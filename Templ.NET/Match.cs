@@ -33,7 +33,7 @@ namespace TemplNET
         /// </summary>
         public string[] Fields => Body.Split(TemplConst.FieldSep);
         /// <summary>
-        /// The placeholder Regex used to find the Match
+        /// The Regex placeholder used to find the Match
         /// </summary>
         public TemplRegex Regex;
         /// <summary>
