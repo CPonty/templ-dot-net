@@ -1,54 +1,120 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Novacode;
 
 namespace TemplNET
 {
     /// <summary>
-    /// Used to store/load images and generate (scaled) pictures.
+    /// Used to load/store images and generate formatted pictures for the document
     /// </summary>
+    /// <example>
+    /// <code>
+    /// using Novacode;
+    ///
+    /// var graphic1 = new TemplGraphic("C:\logo.png");
+    /// var graphic2 = new TemplGraphic("C:\photo.jpg", Alignment.Left, 0.5);
+    /// 
+    /// // Include images in the model
+    /// Templ.Load("C:\template.docx")
+    ///      .Build( new { Title = "Hello World!", logo = graphic1, pic = graphic2 })
+    ///      .SaveAs("C:\output.docx");
+    /// </code>
+    /// </example>
     public class TemplGraphic
     {
+        /// <summary>
+        /// Underlying DocX image instance
+        /// <para/>Not populated until document build time, as it requires a reference to a DocX document
+        /// </summary>
         protected Novacode.Image Image;
-        public MemoryStream Data;
+
+        /// <summary>
+        /// Image data as memory stream
+        /// </summary>
+        public MemoryStream Stream;
+        /// <summary>
+        /// Image data as bytes
+        /// </summary>
+        public byte[] Bytes => Stream.ToArray();
+
+        /// <summary>
+        /// Resizing factor when inserting into the document. Maintains aspect ratio
+        /// </summary>
         public double Scalar;
+        /// <summary>
+        /// Alignment when inserting into the document (e.g. Left, Right, Centre). No change in alignment if null
+        /// </summary>
         public Alignment? Alignment;
+
         private bool Loaded = false;
 
+        /// <summary>
+        /// New graphic from data stream
+        /// </summary>
         public TemplGraphic(Stream data, Alignment? align, double scalar = 1.0)
         {
-            Data = new MemoryStream();
-            data.CopyTo(Data);
+            Stream = new MemoryStream();
+            data.CopyTo(Stream);
             this.Scalar = scalar;
             this.Alignment = align;
         }
+
+        /// <summary>
+        /// New graphic from file data
+        /// </summary>
         public TemplGraphic(byte[] data, Alignment? align, double scalar = 1.0)
             : this(new MemoryStream(data), align, scalar)
         { }
+
+        /// <summary>
+        /// New graphic from filename
+        /// </summary>
         public TemplGraphic(string file, Alignment? align, double scalar = 1.0)
             : this(File.ReadAllBytes(file), align, scalar)
         { }
 
+        /// <summary>
+        /// Load image into document.
+        /// Required before producing a Picture for the document.
+        /// </summary>
         public TemplGraphic Load(DocX doc)
         {
             if (!Loaded)
             {
-                Image = doc.AddImage(Data);
+                Image = doc.AddImage(Stream);
                 Loaded = true;
             }
             return this;
         }
 
+        /// <summary>
+        /// Generate a Picture instance, which can be inserted into a Document
+        /// </summary>
+        /// <param name="scalar">The scaling factor (0.5 is 50%)</param>
         public Picture Picture(double scalar)
         {
+            if (!Loaded)
+            {
+                throw new InvalidDataException("Templ: Tried to generate a Picture from a Graphic before the Graphic was loaded into a Document");
+            }
             var pic = Image.CreatePicture();
             pic.Width = (int)(pic.Width * (scalar));
             pic.Height = (int)(pic.Height * (scalar));
             return pic;
         }
+
+        /// <summary>
+        /// Generate a Picture instance, which can be inserted into a Document
+        /// </summary>
         public Picture Picture()
         {
             return Picture(Scalar);
         }
+
+        /// <summary>
+        /// Generate a Picture instance, which can be inserted into a Document
+        /// </summary>
+        /// <param name="width">The width in pixels</param>
         public Picture Picture(uint width)
         {
             var pic = Image.CreatePicture();

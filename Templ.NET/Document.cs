@@ -5,10 +5,40 @@ using Novacode;
 
 namespace TemplNET
 {
+    /// <summary>
+    /// Represents an instance of a document
+    /// </summary>
+    /// <example>
+    /// <code>
+    /// TemplDoc.EmptyDocument.SaveAs("C:\empty.docx");
+    /// 
+    /// var doc = new TemplDoc("C:\empty.docx");
+    /// 
+    /// var data = doc.Bytes;
+    /// 
+    /// var doc2 = doc.Copy();
+    /// </code>
+    /// </example>
     public class TemplDoc
     {
+        /// <summary>
+        /// Underlying DocX document instance
+        /// </summary>
         public DocX Doc;
+        /// <summary>
+        /// Document as memory stream.
+        /// <para/>Automatically updates from the underlying DocX document on Commit(), SaveAs(), Copy()
+        /// </summary>
+        public MemoryStream Stream = new MemoryStream();
+        /// <summary>
+        /// Document as bytes
+        /// </summary>
+        public byte[] Bytes => Stream.ToArray();
         private string _Filename;
+        /// <summary>
+        /// Filename (can be null).
+        /// <para/>On assignment: filters illegal characters and sets the extension to '.docx'
+        /// </summary>
         public string Filename
         {
             get
@@ -21,13 +51,12 @@ namespace TemplNET
                 _Filename = Path.ChangeExtension(_Filename, ".docx");
             }
         }
-        public MemoryStream Stream = new MemoryStream();
-        public byte[] Bytes => Stream.ToArray();
 
         /// <summary>
-        /// No arguments = generate blank doc
+        /// Generate a blank document
         /// </summary>
-        public static DocX EmptyDocument => DocX.Create(new MemoryStream());
+        public static TemplDoc EmptyDocument => new TemplDoc(EmptyDocx);
+        private static DocX EmptyDocx => DocX.Create(new MemoryStream());
 
         /// <summary>
         /// Start with passed-in doc
@@ -40,7 +69,7 @@ namespace TemplNET
         }
 
         /// <summary>
-        /// Start with file stream
+        /// New document from data stream
         /// </summary>
         /// <param name="stream"></param>
         public TemplDoc(Stream stream)
@@ -50,7 +79,7 @@ namespace TemplNET
         }
 
         /// <summary>
-        /// Start with filename
+        /// New document from filename
         /// </summary>
         /// <param name="filename"></param>
         public TemplDoc(string filename)
@@ -61,7 +90,7 @@ namespace TemplNET
         }
 
         /// <summary>
-        /// Start with file data
+        /// New document from file data
         /// </summary>
         /// <param name="data"></param>
         public TemplDoc(byte[] data)
@@ -81,7 +110,8 @@ namespace TemplNET
             return this;
         }
         /// <summary>
-        /// save to disk
+        /// Save to disk.
+        /// Supplied file name is sanitized and converted to '.zip'
         /// </summary>
         /// <param name="fileName"></param>
         public void SaveAs(string fileName)
@@ -91,11 +121,15 @@ namespace TemplNET
             Doc.SaveAs(Filename);
         }
         /// <summary>
-        /// clone
+        /// Clone
         /// </summary>
         public TemplDoc Copy() => new TemplDoc(Commit().Bytes);
 
-        /* Helper methods for grabbing DocX content */
+        /// <summary>
+        /// Retrieves all paragraph references from the document body, header, footer, and table content.
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <returns></returns>
         public static IEnumerable<Paragraph> Paragraphs(DocX doc)
         {
             return doc.Paragraphs

@@ -243,12 +243,12 @@ namespace TemplNET
             // Single picture: add text placeholder, expire the placeholder picture
             if (e.Value is TemplGraphic)
             {
-                return m.ToText($"{TemplConst.MatchOpen}{TemplConst.Tag.Picture}{TemplConst.FieldSep}{m.Body}{TemplConst.FieldSep}{w}{TemplConst.MatchClose}");
+                return m.ToText($"{TemplConst.MatchOpen}{TemplConst.Prefix.Picture}{TemplConst.FieldSep}{m.Body}{TemplConst.FieldSep}{w}{TemplConst.MatchClose}");
             }
             // Multiple pictures: add repeating list placeholder, expire the placeholder picture
             if (e.Value is TemplGraphic[] || e.Value is ICollection<TemplGraphic>)
             {
-                return m.ToText($"{TemplConst.MatchOpen}{TemplConst.Tag.List}{TemplConst.FieldSep}{m.Body}{TemplConst.MatchClose}{TemplConst.MatchOpen}${TemplConst.FieldSep}{TemplConst.Tag.Picture}{TemplConst.FieldSep}{TemplConst.FieldSep}{w}{TemplConst.MatchClose}");
+                return m.ToText($"{TemplConst.MatchOpen}{TemplConst.Prefix.List}{TemplConst.FieldSep}{m.Body}{TemplConst.MatchClose}{TemplConst.MatchOpen}${TemplConst.FieldSep}{TemplConst.Prefix.Picture}{TemplConst.FieldSep}{TemplConst.FieldSep}{w}{TemplConst.MatchClose}");
             }
             throw new InvalidCastException($"Templ: Failed to retrieve picture(s) from the model at path \"{e.Path}\"; its actual type is \"{e.Type}\"");
         }

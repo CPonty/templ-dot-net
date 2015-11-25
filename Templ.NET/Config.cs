@@ -3,6 +3,9 @@ using System.Linq;
 
 namespace TemplNET
 {
+    /// <summary>
+    /// Global constants for Templ.NET
+    /// </summary>
     public static class TemplConst
     {
         public const bool Debug = false;
@@ -10,7 +13,7 @@ namespace TemplNET
         public const string MatchClose = "}";
         public const char FieldSep = ':';
         public const uint MaxMatchesPerScope = 999;
-        public static class Tag
+        public static class Prefix
         {
             public const string Section = "sec";
             public const string Picture = "pic";
