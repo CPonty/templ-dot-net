@@ -139,6 +139,10 @@ namespace TemplNET
                     Debugger.AddState(Document, module.Name);
                 }
             });
+            if (debug)
+            {
+                Debugger.AddModuleReport(Modules);
+            }
             Document.Commit();
             Debugger.Commit();
             return this;

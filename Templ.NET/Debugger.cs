@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.IO.Compression;
+using System;
 
 namespace TemplNET
 {
@@ -79,6 +80,29 @@ namespace TemplNET
             state.Filename = $"{States.Count}-{name}";
             States.Add(state);
         }
+
+        /// <summary>
+        /// Adds a document containing build statistics to the .zip package
+        /// </summary>
+        public void AddModuleReport(IEnumerable<TemplModule> modules)
+        {
+            States.Add(ModuleReport(modules));
+        }
+
+        /// <summary>
+        /// Generates a document containing build statistics from a set of Modules
+        /// </summary>
+        /// <param name="modules"></param>
+        /// <seealso cref="TemplModule"/>
+        /// <seealso cref="Templ.Build"/>
+        public TemplDoc ModuleReport(IEnumerable<TemplModule> modules)
+        {
+            //TODO implement
+            var doc = TemplDoc.EmptyDocument;
+            doc.Filename = "ModuleReport";
+            return doc;
+        }
+
         /// <summary>
         /// Builds the .zip file (in memory)
         /// </summary>
