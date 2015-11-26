@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using Novacode;
 
 namespace TemplNET
 {
     /// <summary>
-    /// Represents a match on a placeholder substring in some arbitrary string.
+    /// Represents a match on a placeholder substring in some arbitrary string
     /// </summary>
     public class TemplMatchString : TemplMatch
     {
@@ -17,7 +18,7 @@ namespace TemplNET
     }
 
     /// <summary>
-    /// Represents a paragraph, located by matching a placeholder string in the scope of this Paragraph.
+    /// Represents a paragraph, located by matching a placeholder string in the scope of this Paragraph
     /// </summary>
     public class TemplMatchText : TemplMatchPara
     {
@@ -37,7 +38,7 @@ namespace TemplNET
     }
 
     /// <summary>
-    /// Represents a section, located by matching a placeholder string in the scope of this section's paragraph.
+    /// Represents a section, located by matching a placeholder string in the scope of this section's paragraph
     /// </summary>
     public class TemplMatchSection : TemplMatchPara
     {
@@ -73,7 +74,7 @@ namespace TemplNET
     }
 
     /// <summary>
-    /// Represents a table cell, located by matching a placeholder string in the scope of this table's paragraphs.
+    /// Represents a table cell, located by matching a placeholder string in the scope of this table's paragraphs
     /// </summary>
     public class TemplMatchTable : TemplMatchPara
     {
@@ -153,7 +154,7 @@ namespace TemplNET
     }
 
     /// <summary>
-    /// Represents a picture, located by matching a placeholder string in the scope of this picture's Description field.
+    /// Represents a picture, located by matching a placeholder string in the scope of this picture's Description field
     /// </summary>
     public class TemplMatchPicture : TemplMatchText
     {
@@ -226,6 +227,83 @@ namespace TemplNET
             }
             try { Picture.Remove(); }
             catch (InvalidOperationException) { } 
+            RemovedPlaceholder = true;
+            Removed = true;
+        }
+    }
+
+    /// <summary>
+    /// Represents a hyperlink, located by matching a placeholder string in the scope of this hyperlink's Uri
+    /// </summary>
+    public class TemplMatchHyperlink : TemplMatchText
+    {
+        public Hyperlink Hyperlink;
+        private static string UrlString(Hyperlink hl) => WebUtility.UrlDecode(hl?.Uri?.OriginalString ?? "");
+
+        public static IEnumerable<TemplMatchHyperlink> Find(TemplRegex rxp, IEnumerable<Paragraph> paragraphs) 
+        {
+            return paragraphs.SelectMany(p => Find(rxp, p));
+        }
+        public static new IEnumerable<TemplMatchHyperlink> Find(TemplRegex rxp, Paragraph p) 
+        {
+            return p.Hyperlinks
+                .Where(     hl => UrlString(hl).Length > 0)
+                .SelectMany(hl => Find(rxp, p, hl));
+        }
+        private static IEnumerable<TemplMatchHyperlink> Find(TemplRegex rxp, Paragraph p, Hyperlink hl) 
+        {
+            return Find<TemplMatchHyperlink>(rxp, UrlString(hl)).Select(m => {
+                m.Hyperlink= hl;
+                m.Paragraph = p;
+                return m;
+            });
+        }
+
+        /// <summary>
+        /// Sets the Hyperlink's display text
+        /// </summary>
+        public TemplMatchHyperlink SetText(string text)
+        {
+            if (!Removed)
+            {
+                Hyperlink.Text = text;
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the Hyperlink's Url
+        /// </summary>
+        public TemplMatchHyperlink SetUrl(string url)
+        {
+            if (!Removed)
+            {
+                Hyperlink.Uri = new Uri(url);
+                RemovedPlaceholder = true;
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Removes the placeholder from the hyperlink's Url
+        /// </summary>
+        /// 
+        public override void RemovePlaceholder()
+        {
+            Hyperlink.Uri = new Uri(UrlString(Hyperlink).Replace(Placeholder, ""));
+            RemovedPlaceholder = true;
+        }
+
+        /// <summary>
+        /// Removes the matched Hyperlink from the document.
+        /// </summary>
+        public override void Remove()
+        {
+            if (Removed)
+            {
+                return;
+            }
+            Hyperlink.Remove();
             RemovedPlaceholder = true;
             Removed = true;
         }

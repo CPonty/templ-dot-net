@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="Constants.cs" />
     <Compile Include="Debugger.cs" />
+    <Compile Include="Url.cs" />
     <Compile Include="Graphic.cs" />
     <Compile Include="Match.cs" />
     <Compile Include="Module.cs" />

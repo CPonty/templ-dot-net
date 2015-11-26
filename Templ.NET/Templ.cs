@@ -74,6 +74,7 @@ namespace TemplNET
                 new TemplPictureReplaceModule("Picture Replace (2nd Pass)"),
                 new TemplTableModule("Table"),
                 new TemplPicturePlaceholderModule("Picture Placeholder"),
+                new TemplHyperlinkModule("Hyperlink"),
                 new TemplTextModule("Text"),
                 new TemplTOCModule("Table of Contents"),
                 new TemplCommentsModule("Comments"),

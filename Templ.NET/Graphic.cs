@@ -55,8 +55,8 @@ namespace TemplNET
         {
             Stream = new MemoryStream();
             data.CopyTo(Stream);
-            this.Scalar = scalar;
-            this.Alignment = align;
+            Scalar = scalar;
+            Alignment = align;
         }
 
         /// <summary>

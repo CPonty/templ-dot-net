@@ -160,7 +160,7 @@ namespace TemplNET
     }
 
     /// <summary>
-    /// Copies a Matched row N times, where N is the number of items in a collection.
+    /// Copies a Matched row N times, where N is the number of items in a collection
     /// </summary>
     /// Format: {row:path}
     ///    e.g: {row:data.people}
@@ -198,7 +198,7 @@ namespace TemplNET
     }
 
     /// <summary>
-    /// Copies a Matched table cell N times, where N is the number of items in a collection.
+    /// Copies a Matched table cell N times, where N is the number of items in a collection
     /// </summary>
     /// Format: {cel:path}
     ///    e.g: {cel:data.people}
@@ -299,7 +299,7 @@ namespace TemplNET
     }
 
     /// <summary>
-    /// Copies a Matched paragraph N times, where N is the number of items in a collection.
+    /// Copies a Matched paragraph N times, where N is the number of items in a collection
     /// </summary>
     /// Format: {li:path}
     ///    e.g: {li:data.people}
@@ -333,7 +333,7 @@ namespace TemplNET
     }
 
     /// <summary>
-    /// Matches pictures from the document whose Description property contain a Picture Placeholder string.
+    /// Replaces pictures in the document where the Description contains a Picture Placeholder string
     /// </summary>
     /// Format: {pic:path}
     ///    e.g: {pic:images.logoGraphic}
@@ -375,7 +375,50 @@ namespace TemplNET
     }
 
     /// <summary>
-    /// Replaces text placeholders in the Document with Pictures from the model.
+    /// Updates hyperlinks in the document where the URL contains a URL Placeholder string
+    /// </summary>
+    /// Format: {url:urlPath}
+    /// 
+    ///  path=  Path in model to a <see cref="TemplUrl"/>
+    /// 
+    /// if <see cref="TemplUrl.Url"/> is set, the Hyperlink's Url is updated.
+    /// if <see cref="TemplUrl.Text"/> is set, the Hyperlink's Text is updated.
+    /// if <see cref="TemplUrl.ToDelete"/> is set, the Hyperlink is removed.
+    public class TemplHyperlinkModule : TemplModule<TemplMatchHyperlink>
+    {
+        public TemplHyperlinkModule(string name, string prefix = TemplConst.Prefix.Hyperlink)
+            : base(name, prefix)
+        { }
+        public override TemplMatchHyperlink Handler(DocX doc, object model, TemplMatchHyperlink m)
+        {
+            var e = TemplModelEntry.Get(model, m.Body);
+            if (e.Value is TemplUrl)
+            {
+                var url = e.Value as TemplUrl;
+                if (url.ToDelete)
+                {
+                    m.Remove();
+                }
+                if (url.Text?.Length > 0)
+                {
+                    m.SetText(url.Text);
+                }
+                if (url.Url?.Length > 0)
+                {
+                    m.SetUrl(url.Url);
+                }
+                return m;
+            }
+            throw new InvalidCastException($"Templ: Failed to retrieve url from the model at path \"{e.Path}\"; its actual type is \"{e.Type}\"");
+        }
+        public override IEnumerable<TemplMatchHyperlink> FindAll(DocX doc, TemplRegex rxp)
+        {
+            return TemplMatchHyperlink.Find(rxp, TemplDoc.Paragraphs(doc));
+        }
+    }
+
+    /// <summary>
+    /// Replaces text placeholders in the Document with Pictures from the model
     /// </summary>
     /// Format: {pic:path:W}
     ///    e.g: {pic:images.logoGraphic}
@@ -426,7 +469,7 @@ namespace TemplNET
     }
 
     /// <summary>
-    /// Replaces text placeholders in the Document with strings.
+    /// Replaces text placeholders in the Document with strings
     /// </summary>
     /// Format: {txt:path}
     ///    e.g: {txt:strings[x]}
@@ -450,7 +493,7 @@ namespace TemplNET
     }
 
     /// <summary>
-    /// Replaces text placeholders in the Document with a Table of Contents object.
+    /// Replaces text placeholders in the Document with a Table of Contents object
     /// </summary>
     /// Format: {toc:title}
     ///    e.g: {toc:Contents}

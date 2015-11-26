@@ -21,6 +21,7 @@ namespace TemplNET
             public const string Table = "tab";
             public const string Row = "row";
             public const string Cell = "cel";
+            public const string Hyperlink = "url";
             public const string Text = "txt";
             public const string Contents = "toc";
             public const string Comment = "!";
