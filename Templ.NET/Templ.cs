@@ -134,7 +134,7 @@ namespace TemplNET
             }
             ActiveModules.ForEach(module =>
             {
-                module.Build(Document.Doc, model);
+                module.Build(Document.Docx, model);
                 if (debug && module.Used)
                 {
                     Debugger.AddState(Document, module.Name);

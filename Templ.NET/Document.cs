@@ -24,7 +24,7 @@ namespace TemplNET
         /// <summary>
         /// Underlying DocX document instance
         /// </summary>
-        public DocX Doc;
+        public DocX Docx;
         /// <summary>
         /// Document as memory stream.
         /// <para/>Automatically updates from the underlying DocX document on Commit(), SaveAs(), Copy()
@@ -64,8 +64,8 @@ namespace TemplNET
         /// <param name="document"></param>
         public TemplDoc(DocX document)
         {
-            Doc = document;
-            Doc.SaveAs(Stream);
+            Docx = document;
+            Docx.SaveAs(Stream);
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace TemplNET
         public TemplDoc(Stream stream)
         {
             stream.CopyTo(Stream);
-            Doc = DocX.Load(Stream);
+            Docx = DocX.Load(Stream);
         }
 
         /// <summary>
@@ -85,8 +85,8 @@ namespace TemplNET
         public TemplDoc(string filename)
         {
             Filename = filename;
-            Doc = DocX.Load(Filename);
-            Doc.SaveAs(Stream);
+            Docx = DocX.Load(Filename);
+            Docx.SaveAs(Stream);
         }
 
         /// <summary>
@@ -96,7 +96,7 @@ namespace TemplNET
         public TemplDoc(byte[] data)
         {
             Stream = new MemoryStream(data);
-            Doc = DocX.Load(Stream);
+            Docx = DocX.Load(Stream);
         }
 
         /// <summary>
@@ -106,7 +106,7 @@ namespace TemplNET
         public TemplDoc Commit()
         {
             Stream = new MemoryStream();
-            Doc.SaveAs(Stream);
+            Docx.SaveAs(Stream);
             return this;
         }
         /// <summary>
@@ -118,7 +118,7 @@ namespace TemplNET
         {
             // Uses internal getter/setter to filter illegal characters
             Filename = fileName;
-            Doc.SaveAs(Filename);
+            Docx.SaveAs(Filename);
         }
         /// <summary>
         /// Clone

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Novacode;
 
@@ -26,6 +27,11 @@ namespace TemplNET
         /// The set of placeholder regexes used to find Matches in the document
         /// </summary>
         public ISet<TemplRegex> Regexes = new HashSet<TemplRegex>();
+        public IEnumerable<string> Prefixes => Regexes.Select(rxp => rxp.Prefix);
+        /// <summary>
+        /// Named metadata values. Included in the Module meta-report when building in debug mode.
+        /// </summary>
+        public TemplModuleStatistics Statistics = new TemplModuleStatistics();
         /// <summary>
         /// An optional second handler function. Assignable per module instance at runtime. 
         /// </summary>
@@ -107,6 +113,16 @@ namespace TemplNET
             return this;
         }
 
+        private bool RemoveExpired(T m)
+        {
+            if (m.RemoveExpired())
+            {
+                Statistics.removals++;
+                return true;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Verifies the number of fields in the supplied Match's placeholder is within the min/max expected for this Module.
         /// <para/> Throws exception if problems are found.
@@ -130,15 +146,19 @@ namespace TemplNET
         /// </summary>
         public void BuildFromScope(DocX doc, object model, IEnumerable<T> scope)
         {
+            var watch = Stopwatch.StartNew();
             // Mark module instance as "used" if any matches are being processed
             Used = (Used || scope.Count() > 0);
+            watch.Stop();
+            Statistics.matches += scope.Count();
             // Note how we are constantly "committing" the changes using ToList().
             // This ensures order is preserved (e.g. all "finds" happen before all "handler"s)
             scope.Select( m => CheckFieldCount(m) ).ToList()
                  .Select( m => Handler(doc, model, m)).ToList()
-                 .Where(  m =>!m.RemoveExpired()).ToList()
+                 .Where(  m =>!RemoveExpired(m)).ToList()
                  .Select( m => CustomHandler(doc, model, m)).ToList()
-                 .ForEach(m => m.RemoveExpired());
+                 .ForEach(m => RemoveExpired(m));
+            Statistics.millis = watch.ElapsedMilliseconds;
         }
         /// <summary>
         /// Find and build all content from the document
@@ -164,5 +184,13 @@ namespace TemplNET
         /// <param name="doc"></param>
         /// <param name="rxp"></param>
         public abstract IEnumerable<T> FindAll(DocX doc, TemplRegex rxp);
+    }
+
+    public class TemplModuleStatistics
+    {
+        public long millis = 0;
+        public int matches = 0;
+        public int removals = 0;
+        public Dictionary<string, string> statistics = new Dictionary<string, string>();
     }
 }

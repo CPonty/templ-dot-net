@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Drawing;
 using System.IO.Compression;
+using Novacode;
 using System;
 
 namespace TemplNET
@@ -97,10 +99,46 @@ namespace TemplNET
         /// <seealso cref="Templ.Build"/>
         public TemplDoc ModuleReport(IEnumerable<TemplModule> modules)
         {
+            var document = TemplDoc.EmptyDocument;
+            var docx = document.Docx;
+            var calibri = new FontFamily("Calibri");
+
             //TODO implement
-            var doc = TemplDoc.EmptyDocument;
-            doc.Filename = "ModuleReport";
-            return doc;
+            Paragraph title = docx.InsertParagraph().Append("Templ.NET Modular Build Report").FontSize(24).Font(calibri).Bold();
+            docx.InsertParagraph();
+            foreach(TemplModule mod in modules)
+            {
+                Paragraph heading = docx.InsertParagraph().Append(mod.Name).FontSize(14).Font(calibri).Bold();
+                Paragraph body = docx.InsertParagraph().FontSize(10).Font(calibri);
+                Table t = body.InsertTableBeforeSelf(1, 2);
+                t.Design = TableDesign.ColorfulGridAccent2;
+                t.Rows[0].Cells[0].Paragraphs[0].Bold();
+                t.Rows[0].Cells[1].Paragraphs[0].Alignment = Alignment.right;
+                t.InsertRow(t.Rows[0]);
+                t.Rows.Last().Cells[0].Paragraphs[0].InsertText("Match Keys: ");
+                t.Rows.Last().Cells[1].Paragraphs[0].InsertText(
+                    mod.Prefixes.Select(pre => $"\"{pre}\"").Aggregate((a,b) => $"{a},{b}"));
+                t.InsertRow(t.Rows[0]);
+                t.Rows.Last().Cells[0].Paragraphs[0].InsertText("Content Matches: ");
+                t.Rows.Last().Cells[1].Paragraphs[0].InsertText(String.Format("{0:#,##0}",mod.Statistics.matches));
+                t.InsertRow(t.Rows[0]);
+                t.Rows.Last().Cells[0].Paragraphs[0].InsertText("Deletions: ");
+                t.Rows.Last().Cells[1].Paragraphs[0].InsertText(String.Format("{0:#,##0}",mod.Statistics.removals));
+                t.InsertRow(t.Rows[0]);
+                t.Rows.Last().Cells[0].Paragraphs[0].InsertText("Elapsed Time: ");
+                t.Rows.Last().Cells[1].Paragraphs[0].InsertText(String.Format("{0:#,##0} ms",mod.Statistics.millis));
+                foreach (var kv in mod.Statistics.statistics)
+                {
+                    t.InsertRow(t.Rows[0]);
+                    t.Rows.Last().Cells[0].Paragraphs[0].InsertText(kv.Key);
+                    t.Rows.Last().Cells[1].Paragraphs[0].InsertText(kv.Value);
+                }
+                t.Rows[0].Cells[0].Paragraphs[0].InsertText(mod.GetType().ToString().Split('.').Last());
+            }
+
+            document.Filename = "ModuleReport";
+            document.Commit();
+            return document;
         }
 
         /// <summary>
