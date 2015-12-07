@@ -74,8 +74,15 @@ namespace TemplNET
         /// Extracts typed Attributes from the member info. A common example is DisplayFormatAttribute
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        public T[] Attributes<T>() where T : Attribute =>
-            Array.ConvertAll(Info?.GetCustomAttributes(typeof(T), true), a => (T)a);
+        public T[] Attributes<T>() where T : Attribute
+        {
+            if (Info==null)
+            {
+                return new T[] { };
+            }
+            return Array.ConvertAll(Info?.GetCustomAttributes(typeof(T), true), a => (T)a);
+        }
+
         /// <summary>
         /// Extracts one typed Attribute from the member info. A common example is DisplayFormatAttribute
         /// </summary>
@@ -104,7 +111,7 @@ namespace TemplNET
             try
             {
                 var formatter = Attribute<DisplayFormatAttribute>()?.DataFormatString;
-                return (formatter == null ? Value?.ToString() : String.Format(formatter, Value));
+                return (formatter == null ? Value?.ToString() : string.Format(formatter, Value));
             }
             catch (Exception)
             {
@@ -138,6 +145,43 @@ namespace TemplNET
         private TemplModelEntry() { } //Constructor is private
 
         /// <summary>
+        /// Attempts to substitute a model path for a (supported) primitive value.
+        /// </summary>
+        /// Currently supported: <see cref="bool"/>
+        /// <param name="model"></param>
+        /// <param name="path"></param>
+        private static MemberValue GetPrimitive(object model, string path)
+        {
+            try
+            {
+                return new MemberValue()
+                {
+                    Value = bool.Parse(path),
+                    Info = null
+                };
+            }
+            catch
+            {
+            }
+            if (path.Length > 2)
+            {
+                // Account for Smart Quotes
+                var str = path.Replace((char)0x201c, '"').Replace((char)0x201d, '"');
+                var contains1 = "'\"".Contains(str[0]);
+                var contains2 = "'\"".Contains(str[str.Length - 1]);
+                if ("'\"".Contains(str[0]) && "'\"".Contains(str[str.Length-1]))
+                {
+                    return new MemberValue()
+                    {
+                        Value = str.Substring(1, str.Length - 2),
+                        Info = null
+                    };
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Gets a model entry at the specified Path in the given Model.
         /// <para/> Throws exception if cannot be found.
         /// </summary>
@@ -145,7 +189,16 @@ namespace TemplNET
         /// <param name="path"></param>
         public static TemplModelEntry Get(object model, string path)
         {
-            var propVal = MemberValue.FindPath(model, path.Trim());
+            MemberValue propVal;
+            var primitive = GetPrimitive(model, path);
+            if (primitive == null)
+            {
+                propVal = MemberValue.FindPath(model, path.Trim());
+            }
+            else
+            {
+                propVal = primitive;
+            }
             return new TemplModelEntry()
             {
                 Model = model,
@@ -159,7 +212,7 @@ namespace TemplNET
         /// Represents a reference-by-reflection to a member within an object.
         /// <path/> This is a utility class for ModelEntry.
         /// </summary>
-        private class MemberValue
+        protected class MemberValue
         {
             /// <summary>
             /// Matches a collection "index[containing.a.path]"
@@ -185,7 +238,7 @@ namespace TemplNET
             public MemberInfo Info;
             public object Value;
 
-            private MemberValue() { } //Constructor is private
+            public MemberValue() { }
             private MemberValue(MemberInfo info, object value)
             {
                 Info = info;

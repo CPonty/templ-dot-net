@@ -9,7 +9,7 @@ namespace TemplTest
     public class ContentDemoModel
     {
         public bool removeAppendix = true;
-        public bool removeExtraParagraph = true;
+        // public bool removeParagraph = true;
         public string[] list = new string[]
         {
             "Item 1",
