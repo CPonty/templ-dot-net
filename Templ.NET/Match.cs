@@ -205,6 +205,26 @@ namespace TemplNET
             return (T)this;
         }
 
+        private void TrimStart()
+        {
+            var str = Paragraph?.Text;
+            var len = (str?.Length - str?.TrimStart()?.Length) ?? 0;
+            if (len > 0)
+            {
+                Paragraph.RemoveText(0, len);
+            }
+        }
+
+        private void TrimEnd()
+        {
+            var str = Paragraph?.Text;
+            var len = (str?.Length - str?.TrimEnd()?.Length) ?? 0;
+            if (len > 0)
+            {
+                Paragraph.RemoveText(str.Length-len, len);
+            }
+        }
+
         /// <summary>
         /// Remove the matched content from the document
         /// </summary>
@@ -217,6 +237,8 @@ namespace TemplNET
                 return;
             }
             RemovePlaceholder();
+            TrimStart();
+            TrimEnd();
             Removed = true;
         }
 
