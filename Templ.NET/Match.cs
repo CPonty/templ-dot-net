@@ -237,7 +237,7 @@ namespace TemplNET
                 return;
             }
             RemovePlaceholder();
-            TrimStart();
+            //TrimStart();
             TrimEnd();
             Removed = true;
         }

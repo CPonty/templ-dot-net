@@ -45,32 +45,37 @@ namespace TemplNET
         /// Alignment when inserting into the document (e.g. Left, Right, Centre). No change in alignment if null
         /// </summary>
         public Alignment? Alignment;
+        /// <summary>
+        /// String description of the image. Has no automatic function; useful for storing caption text in the model.
+        /// </summary>
+        public string Description;
 
         private bool Loaded = false;
 
         /// <summary>
         /// New graphic from data stream
         /// </summary>
-        public TemplGraphic(Stream data, Alignment? align = null, double scalar = 1.0)
+        public TemplGraphic(Stream data, Alignment? align = null, double scalar = 1.0, string description = "")
         {
             Stream = new MemoryStream();
             data.CopyTo(Stream);
             Scalar = scalar;
             Alignment = align;
+            Description = description;
         }
 
         /// <summary>
         /// New graphic from file data
         /// </summary>
-        public TemplGraphic(byte[] data, Alignment? align = null, double scalar = 1.0)
-            : this(new MemoryStream(data), align, scalar)
+        public TemplGraphic(byte[] data, Alignment? align = null, double scalar = 1.0, string description = "")
+            : this(new MemoryStream(data), align, scalar, description)
         { }
 
         /// <summary>
         /// New graphic from filename
         /// </summary>
-        public TemplGraphic(string file, Alignment? align = null, double scalar = 1.0)
-            : this(File.ReadAllBytes(file), align, scalar)
+        public TemplGraphic(string file, Alignment? align = null, double scalar = 1.0, string description = "")
+            : this(File.ReadAllBytes(file), align, scalar, description)
         { }
 
         /// <summary>

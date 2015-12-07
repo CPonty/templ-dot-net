@@ -35,7 +35,7 @@ namespace TemplTest
             new MyLocation() {Name = "Chile", Number = 3 }
         };
         public MyLocation Location => Locations[0];
-        public TemplGraphic LocationPic = new TemplGraphic(Program.root + @"Images\Australia.png");
+        public TemplGraphic LocationPic = new TemplGraphic(Program.root + @"Images\Australia.png", description: "This is Australia.");
 
         [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd/MM/yy}")]
         public DateTime Date => DateTime.Today.Date;
