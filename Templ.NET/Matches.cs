@@ -60,15 +60,24 @@ namespace TemplNET
         /// <summary>
         /// Removes the placeholder, plus all *contents* of the section. 
         /// </summary>
-        /// Does not remove the section itself, as we found this can be problematic in DocX (sometimes outputs corrupt document)
+        /// Does not Remove() the DocX section object itself - we found this can be problematic (sometimes outputs corrupt document)
         public override void Remove()
         {
-            base.Remove();
-            foreach (Paragraph p in Section.SectionParagraphs.Skip(1))
+            if (Removed)
             {
-                p.Pictures.ForEach(pic => pic.Remove());
-                p.FollowingTable?.Remove();
-                p.Remove(false);
+                return;
+            }
+            foreach (Paragraph p in Section.SectionParagraphs)
+            {
+                try
+                {
+                    p.Pictures?.ForEach(pic => pic.Remove());
+                    p.FollowingTable?.Remove();
+                    p.Remove(trackChanges: false);
+                }
+                catch
+                {
+                }
             }
         }
     }
