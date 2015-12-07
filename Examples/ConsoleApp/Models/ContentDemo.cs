@@ -29,16 +29,17 @@ namespace TemplTest
             public string Name;
             public int Number;
         }
-        public MyLocation Location => Locations[0];
         public MyLocation[] Locations = new MyLocation[] {
             new MyLocation() {Name = "Australia", Number = 1 },
             new MyLocation() {Name = "Brazil", Number = 2 },
             new MyLocation() {Name = "Chile", Number = 3 }
         };
+        public MyLocation Location => Locations[0];
+        public TemplGraphic LocationPic = new TemplGraphic(Program.root + @"Images\Australia.png");
 
         [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd/MM/yy}")]
         public DateTime Date => DateTime.Today.Date;
 
-        public TemplUrl link = new TemplUrl() { Url = "http://www.google.com", Text = "Google's Website" };
+        public TemplUrl link = new TemplUrl() { Url = "https://en.wikipedia.org/wiki/Australia", Text = "Wikipedia" };
     }
 }

@@ -51,7 +51,7 @@ namespace TemplNET
         /// <summary>
         /// New graphic from data stream
         /// </summary>
-        public TemplGraphic(Stream data, Alignment? align, double scalar = 1.0)
+        public TemplGraphic(Stream data, Alignment? align = null, double scalar = 1.0)
         {
             Stream = new MemoryStream();
             data.CopyTo(Stream);
@@ -62,14 +62,14 @@ namespace TemplNET
         /// <summary>
         /// New graphic from file data
         /// </summary>
-        public TemplGraphic(byte[] data, Alignment? align, double scalar = 1.0)
+        public TemplGraphic(byte[] data, Alignment? align = null, double scalar = 1.0)
             : this(new MemoryStream(data), align, scalar)
         { }
 
         /// <summary>
         /// New graphic from filename
         /// </summary>
-        public TemplGraphic(string file, Alignment? align, double scalar = 1.0)
+        public TemplGraphic(string file, Alignment? align = null, double scalar = 1.0)
             : this(File.ReadAllBytes(file), align, scalar)
         { }
 
