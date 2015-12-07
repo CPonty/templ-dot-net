@@ -550,7 +550,7 @@ namespace TemplNET
                 string headerStyle = null
                 int maxIncludeLevel = 3
                 int? rightTabPos = null) */
-            m.RemovePlaceholder();
+            m.Expired = true;
             return m;
         }
         public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
