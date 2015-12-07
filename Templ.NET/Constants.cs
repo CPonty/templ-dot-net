@@ -23,6 +23,7 @@ namespace TemplNET
             public const string Cell = "cel";
             public const string Hyperlink = "url";
             public const string Text = "txt";
+            public const string Remove = "rm";
             public const string Contents = "toc";
             public const string Comment = "!";
             public const string Collection = "$";

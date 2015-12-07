@@ -73,11 +73,12 @@ namespace TemplNET
                 new TemplRepeatingRowModule("Repeating Row"),
                 new TemplPictureReplaceModule("Picture Replace (2nd Pass)"),
                 new TemplTableModule("Table"),
+                new TemplRemoveModule("Remove Paragraph"),
                 new TemplPicturePlaceholderModule("Picture Placeholder"),
                 new TemplHyperlinkModule("Hyperlink"),
                 new TemplTextModule("Text"),
                 new TemplTOCModule("Table of Contents"),
-                new TemplCommentsModule("Comments"),
+                new TemplCommentsModule("Comments")
             };
 
         private Templ() { } // Empty constructor is private        

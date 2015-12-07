@@ -493,6 +493,35 @@ namespace TemplNET
     }
 
     /// <summary>
+    /// Removes the paragraph attached to the placeholder
+    /// </summary>
+    /// Format: {rm:path}
+    ///    e.g: {rm:paragraphs[x]}
+    ///    e.g: {rm:removeDisclaimer}
+    /// 
+    ///  path=  Path in model to a <see cref="bool"/>
+    public class TemplRemoveModule : TemplModule<TemplMatchText>
+    {
+        public TemplRemoveModule(string name, string prefix = TemplConst.Prefix.Remove)
+            : base(name, prefix)
+        { }
+        public override TemplMatchText Handler(DocX doc, object model, TemplMatchText m)
+        {
+            if (TemplModelEntry.Get(model, m.Body).AsType<bool>())
+            {
+                m.Paragraph.Remove(false);
+                m.Removed = true;
+                m.Expired = true;
+            }
+            return m;
+        }
+        public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
+        {
+            return TemplMatchText.Find(rxp, TemplDoc.Paragraphs(doc), 1);
+        }
+    }
+
+    /// <summary>
     /// Replaces text placeholders in the Document with a Table of Contents object
     /// </summary>
     /// Format: {toc:title}
