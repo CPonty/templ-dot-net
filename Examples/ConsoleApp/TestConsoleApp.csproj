@@ -37,6 +37,7 @@
       <HintPath>..\..\Templ.NET\bin\Debug\DocX.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -50,13 +51,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Models.cs" />
+    <Compile Include="Models\ContentDemo.cs" />
+    <Compile Include="Models\HelloWorld.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="README.md" />
     <None Include="Templates\HelloWorld.docx" />
+    <None Include="Templates\ContentDemo.docx" />
+    <None Include="Templates\README.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -18,32 +18,29 @@ namespace TemplTest
     /// <summary>
     /// <para>Simple console application to run all the example templates</para>
     /// </summary>
-    class Program
+    public class Program
     {
-        static bool debug = true;
-        static string root = @"..\..\";
-
-        static Dictionary<string, object> templates
-         = new Dictionary<string, object>()
-         {
-             ["HelloWorld.docx"] = new HelloWorldModel()
-        };
+        public static string root = @"..\..\";
+        public static bool debug = true;
 
         static void Main(string[] args)
         {
-            templates.ToList().ForEach(e => FillTemplate(e.Key, e.Value));
+            Generate("HelloWorld.docx", new HelloWorldModel());
+            Generate("ContentDemo.docx", new ContentDemoModel());
 
             Console.WriteLine("\n All outputs saved to " + Path.GetFullPath(root + ".."));
+
+            System.Diagnostics.Process.Start(root + @"..\" + "ContentDemo.docx");
         }
 
-        static void FillTemplate(string name, object model)
+        static void Generate(string name, object model)
         {
             var file = root + @"Templates\" + name;
             var output = root + @"..\" + name;
 
             Console.WriteLine("Generating " + name);
 
-            var doc = Templ.Load(file, debug).Build(model).SaveAs(output);
+            var doc = Templ.Load(file).Build(model, debug).SaveAs(output);
             if (debug) doc.Debugger.SaveAs(output);
         }
     }
