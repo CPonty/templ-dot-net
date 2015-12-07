@@ -124,9 +124,9 @@ namespace TemplNET
             {
                 return Enumerable.Range(0, (Value as object[]).Length).Select(i => i.ToString()).ToList();
             }
-            if (Value is ICollection<object>)
+            if (Value is IEnumerable<object>)
             {
-                return Enumerable.Range(0, (Value as ICollection<object>).Count).Select(i => i.ToString()).ToList();
+                return Enumerable.Range(0, (Value as IEnumerable<object>).Count()).Select(i => i.ToString()).ToList();
             }
             if (Value is Dictionary<object, object>)
             {

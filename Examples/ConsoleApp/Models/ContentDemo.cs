@@ -17,12 +17,12 @@ namespace TemplTest
             "Item 3",
             "Item 4"
         };
-        public string[] data = new string[]
+        public IEnumerable<string> grid = new List<string>()
         {
-            "Cell 1",
-            "Cell 2",
-            "Cell 3",
-            "Cell 4"
+            "Cell A1",
+            "Cell B1",
+            "Cell A2",
+            "Cell B2"
         };
         public class MyLocation
         {
