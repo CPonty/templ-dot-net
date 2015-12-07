@@ -316,7 +316,7 @@ namespace TemplNET
         {
             var e = TemplModelEntry.Get(model, m.Body);
             m.RemovePlaceholder();
-            foreach (var key in e.ToStringKeys())
+            foreach (var key in e.ToStringKeys().Reverse())
             {
                 var p = m.Paragraph.InsertParagraphAfterSelf(m.Paragraph);
                 new TemplCollectionModule().BuildFromScope(doc, model, new Paragraph[] { p }, $"{m.Body}[{key}]");
