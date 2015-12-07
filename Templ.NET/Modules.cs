@@ -75,13 +75,18 @@ namespace TemplNET
             {
                 return (m as TemplMatchPicture).SetDescription(ParentPath(m));
             }
+            if (m is TemplMatchHyperlink)
+            {
+                return (m as TemplMatchHyperlink).SetUrl(ParentPath(m));
+            }
             return m.ToText(ParentPath(m));
         }
         public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
         {
             // Get both text and picture matches. Contact is possible because MatchText is MatchPicture's base type.
-            return TemplMatchText.Find(rxp, Paragraphs).Concat(
-                   TemplMatchPicture.Find(rxp, Paragraphs).Cast<TemplMatchText>());
+            return TemplMatchText.Find(rxp, Paragraphs)
+                .Concat(TemplMatchPicture.Find(rxp, Paragraphs).Cast<TemplMatchText>())
+                .Concat(TemplMatchHyperlink.Find(rxp, Paragraphs).Cast<TemplMatchText>());
         }
         public string ParentPath(TemplMatchText m)
         {
