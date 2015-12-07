@@ -145,11 +145,11 @@ namespace TemplNET
         /// <param name="path"></param>
         public static TemplModelEntry Get(object model, string path)
         {
-            var propVal = MemberValue.FindPath(model, path);
+            var propVal = MemberValue.FindPath(model, path.Trim());
             return new TemplModelEntry()
             {
                 Model = model,
-                Path = path,
+                Path = path.Trim(),
                 Info = propVal.Info,
                 Value = propVal.Value
             };
