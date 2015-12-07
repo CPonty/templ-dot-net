@@ -53,7 +53,7 @@ namespace TemplNET
         private string Path = "";
         private IEnumerable<Paragraph> Paragraphs = new List<Paragraph>();
 
-        public TemplCollectionModule(string name = "Collection", string prefix = TemplConst.Prefix.Section)
+        public TemplCollectionModule(string name = "Collection", string prefix = TemplConst.Prefix.Collection)
             : base(name, prefix)
         {
             MinFields = 2;
@@ -219,7 +219,7 @@ namespace TemplNET
         {
             var width = m.Table.Rows.First().Cells.Count;
             var keys = TemplModelEntry.Get(model, m.Body).ToStringKeys();
-            var nrows = keys.Count() / width + 1;
+            var nrows = (int)Math.Ceiling(keys.Count() / (float)width);
             m.Validate();
             m.RemovePlaceholder();
             for (int n=0; n< width; n++)
@@ -560,7 +560,7 @@ namespace TemplNET
     }
 
     /// <summary>
-    /// Removes text placeholders from the Document
+    /// Removes comments from the Document
     /// </summary>
     /// Format: {!:text}
     ///    e.g: {!:This section of the document is blank; user to enter text}
@@ -570,7 +570,9 @@ namespace TemplNET
     {
         public TemplCommentsModule(string name, string prefix = TemplConst.Prefix.Comment)
             : base(name, prefix)
-        { }
+        {
+            MaxFields = 99;
+        }
         public override TemplMatchText Handler(DocX doc, object model, TemplMatchText m)
         {
             m.Expired = true;
