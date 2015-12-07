@@ -165,7 +165,7 @@ namespace TemplNET
     /// Format: {row:path}
     ///    e.g: {row:data.people}
     /// 
-    ///  path=  Path in model to an Array, Collection or Dictionary.
+    ///  path=  Path in model to an Array, Enumerable or Dictionary.
     /// 
     /// If the collection is empty, the matched row is deleted.
     public class TemplRepeatingRowModule : TemplModule<TemplMatchTable>
@@ -198,21 +198,21 @@ namespace TemplNET
     }
 
     /// <summary>
-    /// Copies a Matched table cell N times, where N is the number of items in a collection
+    /// Copies a Matched table cell into a grid pattern N times, where N is the number of items in a collection
     /// </summary>
     /// Format: {cel:path}
     ///    e.g: {cel:data.people}
     /// 
-    ///  path=  Path in model to an Array, Collection or Dictionary.
+    ///  path=  Path in model to an Array, Enumerable or Dictionary.
     /// 
     /// Cell copying is assumed to be in a grid structure.
     /// The cell is copied from left-to-right, beginning on the matched table row.
     /// Extra table rows are inserted as required.
     /// 
     /// If the collection is empty, the matched row is deleted.
-    public class TemplRepeatingCellModule : TemplModule<TemplMatchTable>
+    public class TemplRepeatingCellGridModule : TemplModule<TemplMatchTable>
     {
-        public TemplRepeatingCellModule(string name, string prefix = TemplConst.Prefix.Cell)
+        public TemplRepeatingCellGridModule(string name, string prefix = TemplConst.Prefix.Cell)
             : base(name, prefix)
         { }
         public override TemplMatchTable Handler(DocX doc, object model, TemplMatchTable m)
@@ -304,7 +304,7 @@ namespace TemplNET
     /// Format: {li:path}
     ///    e.g: {li:data.people}
     /// 
-    ///  path=  Path in model to an Array, Collection or Dictionary.
+    ///  path=  Path in model to an Array, Enumerable or Dictionary.
     /// 
     /// If the collection is empty, the matched paragraph is deleted.
     public class TemplRepeatingTextModule : TemplModule<TemplMatchText>

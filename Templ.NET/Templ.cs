@@ -69,7 +69,7 @@ namespace TemplNET
                 new TemplSectionModule("Section"),
                 new TemplPictureReplaceModule("Picture Replace"),
                 new TemplRepeatingTextModule("Repeating Text"),
-                new TemplRepeatingCellModule("Repeating Cell"),
+                new TemplRepeatingCellGridModule("Repeating Cell Grid"),
                 new TemplRepeatingRowModule("Repeating Row"),
                 new TemplPictureReplaceModule("Picture Replace (2nd Pass)"),
                 new TemplTableModule("Table"),
