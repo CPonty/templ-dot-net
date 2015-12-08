@@ -22,6 +22,7 @@ namespace TemplTest
     {
         public static string root = @"..\..\";
         public static bool debug = true;
+        public static HandleFailAction modelEntryFailAction = HandleFailAction.exception;
 
         static void Main(string[] args)
         {
@@ -40,7 +41,7 @@ namespace TemplTest
 
             Console.WriteLine("Generating " + name);
 
-            var doc = Templ.Load(file).Build(model, debug).SaveAs(output);
+            var doc = Templ.Load(file).Build(model, debug, modelEntryFailAction).SaveAs(output);
             if (debug) doc.Debugger.SaveAs(output);
         }
     }

@@ -7,6 +7,22 @@ using System.Text.RegularExpressions;
 
 namespace TemplNET
 {
+    public class ModelEntryException : Exception
+    {
+        public ModelEntryException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// List of ways in which an exception in a module handler can be handled
+    /// </summary>
+    /// Example:  {txt:user.name} // user.name is not a property in the model
+    public enum HandleFailAction
+    {
+        exception, ignore, remove
+    };
+
     /// <summary>
     /// Represents a reference-by-reflection to a Entry (a field/property/member) within an object. 
     /// The entry's nested Path is defined with a string.
@@ -189,23 +205,28 @@ namespace TemplNET
         /// <param name="path"></param>
         public static TemplModelEntry Get(object model, string path)
         {
-            MemberValue propVal;
-            var primitive = GetPrimitive(model, path);
-            if (primitive == null)
-            {
-                propVal = MemberValue.FindPath(model, path.Trim());
+            try {
+                MemberValue propVal;
+                var primitive = GetPrimitive(model, path);
+                if (primitive == null)
+                {
+                    propVal = MemberValue.FindPath(model, path.Trim());
+                }
+                else
+                {
+                    propVal = primitive;
+                }
+                return new TemplModelEntry()
+                {
+                    Model = model,
+                    Path = path.Trim(),
+                    Info = propVal.Info,
+                    Value = propVal.Value
+                };
             }
-            else
-            {
-                propVal = primitive;
+            catch (Exception ex) {
+                throw new ModelEntryException($"Failed to retrieve entry from the model at path '{path}'", ex);
             }
-            return new TemplModelEntry()
-            {
-                Model = model,
-                Path = path.Trim(),
-                Info = propVal.Info,
-                Value = propVal.Value
-            };
         }
 
         /// <summary>

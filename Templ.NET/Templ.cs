@@ -127,7 +127,7 @@ namespace TemplNET
         /// </summary>
         /// <seealso cref="Debugger"/>
         /// 
-        public Templ Build(object model, bool debug = TemplConst.Debug)
+        public Templ Build(object model, bool debug = TemplConst.Debug, HandleFailAction modelEntryFailAction = HandleFailAction.exception)
         {
             if (debug)
             {
@@ -135,7 +135,7 @@ namespace TemplNET
             }
             ActiveModules.ForEach(module =>
             {
-                module.Build(Document.Docx, model);
+                module.Build(Document.Docx, model, modelEntryFailAction);
                 if (debug && module.Used)
                 {
                     Debugger.AddState(Document, module.Name);

@@ -64,7 +64,7 @@ namespace TemplNET
         {
             Path = path;
             Paragraphs = paragraphs;
-            Build(doc, model);
+            Build(doc, model, HandleFailAction.exception);
             Path = "";
             paragraphs = new List<Paragraph>();
         }

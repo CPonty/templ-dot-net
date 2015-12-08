@@ -65,7 +65,7 @@ namespace TemplNET
         /// Applies all changes to the document.
         /// <see cref="Templ.Build"/> automatically executes it for all <see cref="Templ.ActiveModules"/>.
         /// </summary>
-        public abstract void Build(DocX doc, object model);
+        public abstract void Build(DocX doc, object model, HandleFailAction modelEntryFailAction);
     }
 
     /// <summary>
@@ -127,7 +127,6 @@ namespace TemplNET
         /// Verifies the number of fields in the supplied Match's placeholder is within the min/max expected for this Module.
         /// <para/> Throws exception if problems are found.
         /// </summary>
-        /// <param name="m"></param>
         private T CheckFieldCount(T m)
         {
             var l = m.Fields.Length;
@@ -141,10 +140,11 @@ namespace TemplNET
             }
             return m;
         }
+
         /// <summary>
         /// Handle and/or remove a collection of Matches from the document
         /// </summary>
-        public void BuildFromScope(DocX doc, object model, IEnumerable<T> scope)
+        public void BuildFromScope(DocX doc, object model, IEnumerable<T> scope, HandleFailAction modelEntryFailAction)
         {
             var watch = Stopwatch.StartNew();
             // Mark module instance as "used" if any matches are being processed
@@ -154,35 +154,51 @@ namespace TemplNET
             // Note how we are constantly "committing" the changes using ToList().
             // This ensures order is preserved (e.g. all "finds" happen before all "handler"s)
             scope.Select( m => CheckFieldCount(m) ).ToList()
-                 .Select( m => Handler(doc, model, m)).ToList()
+                 .Select( m => TryHandler(doc, model, m, modelEntryFailAction)).ToList()
                  .Where(  m =>!RemoveExpired(m)).ToList()
                  .Select( m => CustomHandler(doc, model, m)).ToList()
                  .ForEach(m => RemoveExpired(m));
             Statistics.millis = watch.ElapsedMilliseconds;
         }
+
+        private T TryHandler(DocX doc, object model, T m, HandleFailAction modelEntryFailAction)
+        {
+            try
+            {
+                return Handler(doc, model, m);
+            }
+            catch (ModelEntryException)
+            {
+                switch (modelEntryFailAction)
+                {
+                    case HandleFailAction.exception:
+                        throw;
+                    case HandleFailAction.remove:
+                        m.Expired = true;
+                        break;
+                }
+                return m;
+            }
+        }
+
         /// <summary>
         /// Find and build all content from the document
         /// </summary>
-        public override void Build(DocX doc, object model)
+        public override void Build(DocX doc, object model, HandleFailAction modelEntryFailAction)
         {
-            BuildFromScope(doc, model, Regexes.SelectMany(rxp => FindAll(doc, rxp)));
+            BuildFromScope(doc, model, Regexes.SelectMany(rxp => FindAll(doc, rxp)), modelEntryFailAction);
         }
 
         /// <summary>
         /// Module-specific Match handler.
         /// Implementations should modify the Matched content, or mark expired to delete
         /// </summary>
-        /// <param name="doc"></param>
-        /// <param name="model"></param>
-        /// <param name="m"></param>
         public abstract T Handler(DocX doc, object model, T m);
 
         /// <summary>
         /// Module-specific finder.
         /// Implementations should retrieve all regex-matching content from the document.
         /// </summary>
-        /// <param name="doc"></param>
-        /// <param name="rxp"></param>
         public abstract IEnumerable<T> FindAll(DocX doc, TemplRegex rxp);
     }
 
