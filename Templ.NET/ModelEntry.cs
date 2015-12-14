@@ -404,7 +404,7 @@ namespace TemplNET
                         // If value is null, either all the try-catches failed or the field truly is null. Either way, no-go.
                         if (value == null)
                         {
-                            throw new FieldAccessException($"Templ: Failed to index into model collection/dict/arr \"{name}\"");
+                            throw new FieldAccessException($"Templ: Failed to index into model collection/dict/array '{name}'");
                         }
                         member = new MemberValue(member.Info, value);
                     }

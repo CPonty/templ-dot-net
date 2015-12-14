@@ -217,7 +217,9 @@ namespace TemplNET
             for (int i=0; i<keys.Count(); i++)
             {
                 var s = $"{TemplConst.MatchOpen}{TemplConst.Prefix.Text}{TemplConst.FieldSep}{m.Fields[0]}[{keys[i]}]{TemplConst.MatchClose}";
-                m.Row.Cells[i + m.CellIndex].Paragraphs.Last().InsertText(s);
+                var p = m.Row.Cells[i + m.CellIndex].Paragraphs.Last();
+                p.InsertParagraphAfterSelf(m.Paragraph).ReplaceText(m.Paragraph.Text, s);
+                p.Remove(trackChanges: false);
             }
             m.RemovePlaceholder();
             m.Removed = true;
