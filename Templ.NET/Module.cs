@@ -163,19 +163,19 @@ namespace TemplNET
 
         private T TryHandler(DocX doc, object model, T m, HandleFailAction modelEntryFailAction)
         {
+            if (modelEntryFailAction == HandleFailAction.exception)
+            {
+                return Handler(doc, model, m);
+            }
             try
             {
                 return Handler(doc, model, m);
             }
-            catch (ModelEntryException)
+            catch (ModelEntryException ex)
             {
-                switch (modelEntryFailAction)
+                if (modelEntryFailAction == HandleFailAction.remove)
                 {
-                    case HandleFailAction.exception:
-                        throw;
-                    case HandleFailAction.remove:
-                        m.Expired = true;
-                        break;
+                    m.Expired = true;
                 }
                 return m;
             }

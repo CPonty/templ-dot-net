@@ -17,7 +17,7 @@ namespace TemplTest
             "Item 3",
             "Item 4"
         };
-        public IEnumerable<string> grid = new List<string>()
+        public IEnumerable<string> cells = new List<string>()
         {
             "Cell A1",
             "Cell B1",
@@ -41,5 +41,12 @@ namespace TemplTest
         public DateTime Date => DateTime.Today.Date;
 
         public TemplUrl link = new TemplUrl() { Url = "https://en.wikipedia.org/wiki/Australia", Text = "Wikipedia" };
+
+        public IEnumerable<string> gridHeader = new List<string>() { "Column A", "Column B", "Column C" };
+        public string[][] Grid = new string[][]
+        {
+            new string[]{ "Cell A1", "Cell B1", "Cell C1" },
+            new string[]{ "Cell A2", "Cell B2", "Cell C2" }
+        };
     }
 }

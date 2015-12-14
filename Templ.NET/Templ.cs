@@ -54,13 +54,13 @@ namespace TemplNET
         /// Debugger.SaveAs("C:\debugOutput.zip");
         /// </code>
         /// </example>
-        /// <seealso cref="Build(object, bool)"/>
+        /// <seealso cref="Build(object, bool, HandleFailAction)"/>
         public TemplDebugger Debugger;
 
         /// <summary>
         /// Active Modules (text, picture, table etc.). Applied to the document at Build time.
         /// </summary>
-        /// <seealso cref="Build(object, bool)"/>
+        /// <seealso cref="Build(object, bool, HandleFailAction)"/>
         public List<TemplModule> ActiveModules = new List<TemplModule>();
         public List<string> ModuleNames => ActiveModules.Select(mod => mod.Name).ToList();
         private static List<TemplModule> DefaultModules =>
@@ -71,6 +71,7 @@ namespace TemplNET
                 new TemplRepeatingTextModule("Repeating Text"),
                 new TemplRepeatingCellGridModule("Repeating Cell Grid"),
                 new TemplRepeatingRowModule("Repeating Row"),
+                new TemplDynamicCellsModule("Dynamic Table Cells"),
                 new TemplPictureReplaceModule("Picture Replace (2nd Pass)"),
                 new TemplTableModule("Table"),
                 new TemplRemoveModule("Remove Paragraph"),

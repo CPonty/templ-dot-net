@@ -254,7 +254,7 @@ namespace TemplNET
             /// <summary>
             /// Matches a collection "index[string]"
             /// </summary>
-            public static readonly Regex IndexRegex = new Regex(@"([^\[]+)\[([^\]]+)\]");
+            public static readonly Regex IndexRegex = new Regex(@"([^\[]+)(\[[^\]]+\])");
 
             public MemberInfo Info;
             public object Value;
@@ -367,40 +367,48 @@ namespace TemplNET
             {
                 if (IndexRegex.IsMatch(name))
                 {
-                    var groups = IndexRegex.Match(name).Groups;
-                    var member = Get(parentMember.Value, groups[1].Value);
-                    var key = groups[2].Value;
-                    object value = null;
-                    try
+                    var nameString = IndexRegex.Match(name).Groups.Cast<Group>().Skip(1).FirstOrDefault().Value;
+                    var indexString = name.Substring(name.IndexOf('['));
+                    var keys = indexString
+                        .Split(new string[] { "][" }, StringSplitOptions.None)
+                        .Select(s => s.Replace("[", "").Replace("]", ""))
+                        ?? new List<string>() { indexString.Replace("[", "").Replace("]", "") };
+                    var member = Get(parentMember.Value, nameString);
+                    foreach (var key in keys)
                     {
-                        // Assume it's a dict
-                        value = DynamicDict((dynamic)member.Value, key);
-                    }
-                    catch
-                    {
+                        object value = null;
                         try
                         {
-                            // Assume it's enumerable
-                            var enumerable = member.Value as IEnumerable<object>;
-                            value = enumerable?.ElementAt(int.Parse(key));
+                            // Assume it's a dict
+                            value = DynamicDict((dynamic)member.Value, key);
                         }
                         catch
                         {
                             try
                             {
-                                // Assume it's an array
-                                var array = member.Value as object[];
-                                value = array[int.Parse(key)];
+                                // Assume it's enumerable
+                                var enumerable = member.Value as IEnumerable<object>;
+                                value = enumerable?.ElementAt(int.Parse(key));
                             }
-                            catch { }
+                            catch
+                            {
+                                try
+                                {
+                                    // Assume it's an array
+                                    var array = member.Value as object[];
+                                    value = array[int.Parse(key)];
+                                }
+                                catch { }
+                            }
                         }
+                        // If value is null, either all the try-catches failed or the field truly is null. Either way, no-go.
+                        if (value == null)
+                        {
+                            throw new FieldAccessException($"Templ: Failed to index into model collection/dict/arr \"{name}\"");
+                        }
+                        member = new MemberValue(member.Info, value);
                     }
-                    // If value is null, either all the try-catches failed or the field truly is null. Either way, no-go.
-                    if (value == null)
-                    {
-                        throw new FieldAccessException($"Templ: Failed to index into model collection/dict/arr \"{name}\"");
-                    }
-                    return new MemberValue(member.Info, value);
+                    return member;
                 }
                 return Get(parentMember.Value, name);
             }

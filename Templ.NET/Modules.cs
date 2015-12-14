@@ -165,6 +165,71 @@ namespace TemplNET
     }
 
     /// <summary>
+    /// Insert objects from an array/collection into a table row.
+    /// More columns are added if required.
+    /// </summary>
+    /// Format: {cells:path:max}
+    ///    e.g: {cells:strings}
+    ///    e.g: {cells:strings:10}
+    ///    
+    ///  path=  Path in model to an array/collection of objects 
+    ///   max=  (Optional) Maximum number of columns (default <see cref="TemplConst.MaxMatchesPerScope"/>)
+    ///    
+    /// =======================================================================
+    /// 2-Dimensional Table Example
+    ///    
+    /// When combined with the Repeating Row module, 
+    ///  a dynamic number of rows *and* columns is created.
+    /// 'path' should refer to an <![CDATA[ object[][] ]]> or <![CDATA[ IEnumerable<IEnumerable<object>> ]]>.
+    /// 
+    /// Format: {row:path}{$:dynamicCells::max}
+    ///    e.g: {row:tableData}{$:cells:}
+    ///    e.g: {row:tableData}{$:cells::10}
+    /// 
+    ///  path=  Path in model to an array/collection of arrays/collections.
+    ///   max=  (Optional) Maximum number of columns (default <see cref="TemplConst.MaxMatchesPerScope"/>)
+    ///    
+    public class TemplDynamicCellsModule : TemplModule<TemplMatchTable>
+    {
+        public TemplDynamicCellsModule(string name, string prefix = TemplConst.Prefix.Cells)
+            : base(name, prefix)
+        {
+            MaxFields = 2;
+        }
+        public override TemplMatchTable Handler(DocX doc, object model, TemplMatchTable m)
+        {
+            m.Validate();
+            var e = TemplModelEntry.Get(model, m.Fields.First());
+            var maxCells = TemplConst.MaxMatchesPerScope;
+            if (m.Fields.Length == 2)
+            {
+                if (!uint.TryParse(m.Fields[1], out maxCells))
+                {
+                    throw new ArgumentException($"Templ: Dynamic Cell Module '{m.Placeholder}' has invalid maximum cells: '{m.Fields[1]}'");
+                }
+            }
+            var keys = e.ToStringKeys().Take((int)maxCells).ToList();
+            var columnDiff = keys.Count() - m.Table.ColumnCount + m.CellIndex;
+            for (int i=0; i<columnDiff; i++)
+            {
+                m.Table.InsertColumn();
+            }
+            for (int i=0; i<keys.Count(); i++)
+            {
+                var s = $"{TemplConst.MatchOpen}{TemplConst.Prefix.Text}{TemplConst.FieldSep}{m.Fields[0]}[{keys[i]}]{TemplConst.MatchClose}";
+                m.Row.Cells[i + m.CellIndex].Paragraphs.Last().InsertText(s);
+            }
+            m.RemovePlaceholder();
+            m.Removed = true;
+            return m;
+        }
+        public override IEnumerable<TemplMatchTable> FindAll(DocX doc, TemplRegex rxp)
+        {
+            return TemplMatchTable.Find(rxp, doc.Tables);
+        }
+    }
+
+    /// <summary>
     /// Copies a Matched row N times, where N is the number of items in a collection
     /// </summary>
     /// Format: {row:path}
@@ -367,7 +432,7 @@ namespace TemplNET
                 return m.ToText($"{TemplConst.MatchOpen}{TemplConst.Prefix.Picture}{TemplConst.FieldSep}{m.Body}{TemplConst.FieldSep}{w}{TemplConst.MatchClose}");
             }
             // Multiple pictures: add repeating list placeholder, expire the placeholder picture
-            if (e.Value is TemplGraphic[] || e.Value is ICollection<TemplGraphic>)
+            if (e.Value is TemplGraphic[] || e.Value is IEnumerable<TemplGraphic>)
             {
                 return m.ToText($"{TemplConst.MatchOpen}{TemplConst.Prefix.List}{TemplConst.FieldSep}{m.Body}{TemplConst.MatchClose}{TemplConst.MatchOpen}${TemplConst.FieldSep}{TemplConst.Prefix.Picture}{TemplConst.FieldSep}{TemplConst.FieldSep}{w}{TemplConst.MatchClose}");
             }
@@ -460,9 +525,9 @@ namespace TemplNET
                 return m.ToPictures((e.Value as TemplGraphic[])
                         .Select(g => g.Load(doc)).ToArray(), w);
             }
-            if (e.Value is ICollection<TemplGraphic>)
+            if (e.Value is IEnumerable<TemplGraphic>)
             {
-                return m.ToPictures((e.Value as ICollection<TemplGraphic>)
+                return m.ToPictures((e.Value as IEnumerable<TemplGraphic>)
                         .Select(g => g.Load(doc)).ToList(), w);
             }
             throw new InvalidCastException($"Templ: Failed to retrieve picture(s) from the model at path \"{e.Path}\"; its actual type is \"{e.Type}\"");
