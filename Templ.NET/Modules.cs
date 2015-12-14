@@ -83,7 +83,7 @@ namespace TemplNET
         }
         public override IEnumerable<TemplMatchText> FindAll(DocX doc, TemplRegex rxp)
         {
-            // Get both text and picture matches. Contact is possible because MatchText is MatchPicture's base type.
+            // Get both text and picture matches. Concat is possible due to the shared base type (MatchText)
             return TemplMatchText.Find(rxp, Paragraphs)
                 .Concat(TemplMatchPicture.Find(rxp, Paragraphs).Cast<TemplMatchText>())
                 .Concat(TemplMatchHyperlink.Find(rxp, Paragraphs).Cast<TemplMatchText>());
@@ -220,11 +220,13 @@ namespace TemplNET
                 var p = m.Row.Cells[i + m.CellIndex].Paragraphs.Last();
                 p.InsertParagraphAfterSelf(m.Paragraph).ReplaceText(m.Paragraph.Text, s);
                 p.Remove(trackChanges: false);
+                TemplDoc.CellCopyProperties(m.Cell, m.Row.Cells[i + m.CellIndex]);
             }
             m.RemovePlaceholder();
             m.Removed = true;
             return m;
         }
+
         public override IEnumerable<TemplMatchTable> FindAll(DocX doc, TemplRegex rxp)
         {
             return TemplMatchTable.Find(rxp, doc.Tables);
@@ -298,7 +300,7 @@ namespace TemplNET
             {
                 if (n != m.CellIndex)
                 {
-                    CellCopy(m.Cell, m.Row.Cells[n]);
+                    TemplDoc.CellCopyContents(m.Cell, m.Row.Cells[n]);
                 }
             }
             Row row = m.Row;
@@ -315,7 +317,7 @@ namespace TemplNET
                 }
                 else
                 {
-                    CellClear(cell);
+                    TemplDoc.CellClear(cell);
                 }
             }
             m.Row.Remove();
@@ -323,44 +325,6 @@ namespace TemplNET
             return m;
         }
 
-        /// <summary>
-        /// Clear text and images from all paragraphs in cell.
-        /// <para/>
-        /// Optional: Delete all paragraph objects.
-        /// Keep in mind, cells with zero paragraphs are considered malformed by Word!
-        /// Also keep in mind, you will lose formatting info (e.g. font).
-        /// <para/>
-        /// Special cases of content other than text or images may not be removed;
-        /// If this becomes a problem, we can develop it.
-        /// </summary>
-        /// <param name="cell"></param>
-        /// <param name="deleteAllParagraphs"></param>
-        public static void CellClear(Cell cell, bool deleteAllParagraphs = false)
-        {
-            // Remove all but first paragraph
-            cell.Paragraphs.Skip(deleteAllParagraphs ? 0 : 1).ToList().ForEach(p => cell.RemoveParagraph(p));
-            if (!deleteAllParagraphs)
-            {
-                var p = cell.Paragraphs.Last();
-                if (p.Text.Length > 0)
-                {
-                    p.RemoveText(0, p.Text.Length);
-                }
-            }
-            cell.Pictures.ForEach(pic => pic.Remove());
-        }
-
-        /// <summary>
-        /// Copy (text) contents of srcCell into dstCell.
-        /// Clears text of dstCell plus all but first paragraph instance before copying.
-        /// </summary>
-        /// <param name="srcCell"></param>
-        /// <param name="dstCell"></param>
-        public static void CellCopy(Cell srcCell, Cell dstCell)
-        {
-            CellClear(dstCell, true);
-            srcCell.Paragraphs.ToList().ForEach(p => dstCell.InsertParagraph(p));
-        }
         public override IEnumerable<TemplMatchTable> FindAll(DocX doc, TemplRegex rxp)
         {
             // Expecting only 1 match per row (yes really, per row)

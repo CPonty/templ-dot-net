@@ -136,5 +136,62 @@ namespace TemplNET
             .Concat(doc.Headers?.odd?.Paragraphs?.ToList() ?? new List<Paragraph>())
             .Concat(doc.Footers?.odd?.Paragraphs?.ToList() ?? new List<Paragraph>());
         }
+
+        public static void CellCopyProperties (Cell fromCell, Cell toCell)
+        {
+            if (!fromCell.FillColor.IsEmpty)
+            {
+                toCell.FillColor = fromCell.FillColor;
+            }
+            if (!fromCell.Shading.IsEmpty)
+            {
+                toCell.Shading = fromCell.Shading;
+            }
+            toCell.MarginBottom = fromCell.MarginBottom;
+            toCell.MarginLeft = fromCell.MarginLeft;
+            toCell.MarginRight = fromCell.MarginRight;
+            toCell.MarginTop = fromCell.MarginTop;
+            toCell.TextDirection = fromCell.TextDirection;
+            toCell.VerticalAlignment = fromCell.VerticalAlignment;
+        }
+
+        /// <summary>
+        /// Clear text and images from all paragraphs in cell.
+        /// <para/>
+        /// Optional: Delete all paragraph objects.
+        /// Keep in mind, cells with zero paragraphs are considered malformed by Word!
+        /// Also keep in mind, you will lose formatting info (e.g. font).
+        /// <para/>
+        /// Special cases of content other than text or images may not be removed;
+        /// If this becomes a problem, we can develop it.
+        /// </summary>
+        /// <param name="cell"></param>
+        /// <param name="deleteAllParagraphs"></param>
+        public static void CellClear(Cell cell, bool deleteAllParagraphs = false)
+        {
+            // Remove all but first paragraph
+            cell.Paragraphs.Skip(deleteAllParagraphs ? 0 : 1).ToList().ForEach(p => cell.RemoveParagraph(p));
+            if (!deleteAllParagraphs)
+            {
+                var p = cell.Paragraphs.Last();
+                if (p.Text.Length > 0)
+                {
+                    p.RemoveText(0, p.Text.Length);
+                }
+            }
+            cell.Pictures.ForEach(pic => pic.Remove());
+        }
+
+        /// <summary>
+        /// Copy (text) contents of srcCell into dstCell.
+        /// Clears text of dstCell plus all but first paragraph instance before copying.
+        /// </summary>
+        /// <param name="srcCell"></param>
+        /// <param name="dstCell"></param>
+        public static void CellCopyContents(Cell srcCell, Cell dstCell)
+        {
+            CellClear(dstCell, true);
+            srcCell.Paragraphs.ToList().ForEach(p => dstCell.InsertParagraph(p));
+        }
     }
 }
