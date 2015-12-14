@@ -42,7 +42,7 @@ namespace TemplNET
         {
             return new Regex(
                        Regex.Escape($"{TemplConst.MatchOpen}{prefix}{TemplConst.FieldSep}") + @"([^" 
-                     + Regex.Escape(TemplConst.MatchClose) + "]+)" 
+                     + Regex.Escape(TemplConst.MatchClose) + "]*)" 
                      + Regex.Escape(TemplConst.MatchClose), Options);
         }
     }
